@@ -254,12 +254,20 @@
   .shop-bal{font-weight:800;font-size:13.5px;white-space:nowrap;text-align:right}
   .shop-bal small{display:block;font-size:9.5px;color:var(--muted);font-weight:600;margin-top:2px;letter-spacing:.3px}
 
+  .shop-rank{
+    width:22px;height:22px;border-radius:50%;flex-shrink:0;
+    display:grid;place-items:center;font-size:10.5px;font-weight:800;
+    background:linear-gradient(135deg,var(--accent),var(--accent-2));
+    color:#fff;box-shadow:0 2px 8px rgba(99,102,241,.4);
+  }
+
   .tx-list{display:flex;flex-direction:column;gap:7px}
   .tx{
     display:flex;gap:10px;padding:10px 11px;align-items:flex-start;
     background:var(--surface-2);border:1px solid var(--border);border-radius:11px;
     transition:.2s;
   }
+  .tx:active{transform:scale(.99)}
   .tx-icon{
     width:34px;height:34px;border-radius:10px;flex-shrink:0;
     display:grid;place-items:center;font-size:14px;font-weight:700;
@@ -275,9 +283,21 @@
   .tx-amount.job{color:#fbbf24}
   .tx-amount.payment{color:#34d399}
 
+  .more-btn{
+    width:100%;padding:11px;border-radius:11px;margin-top:10px;
+    background:var(--surface-2);border:1px dashed var(--border);
+    color:var(--muted);font-weight:700;font-size:12.5px;
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    transition:.2s;
+  }
+  .more-btn:hover{color:var(--text);border-color:var(--accent);background:rgba(99,102,241,.06)}
+
   .empty{text-align:center;padding:40px 16px;color:var(--muted)}
   .empty .ico{font-size:38px;opacity:.35;margin-bottom:10px}
   .empty p{font-size:13px;line-height:1.7}
+  .empty.small{padding:22px 10px}
+  .empty.small .ico{font-size:28px;margin-bottom:6px}
+  .empty.small p{font-size:12px}
 
   .bottom-nav{
     position:fixed;left:0;right:0;bottom:0;z-index:38;
@@ -780,7 +800,7 @@
       <div class="ico" id="sbIcon">📱</div>
       <div style="min-width:0;flex:1">
         <div class="nm" id="sbName">Shop Ledger</div>
-        <div class="sub">LOOKMOBILE</div>
+        <div class="sub">Track your shop debts with ease</div>
       </div>
     </div>
     <nav class="sb-nav">
@@ -835,6 +855,25 @@
           </div>
           <div class="chart-wrap"><canvas id="mainChart"></canvas></div>
         </section>
+
+        <!-- NEW: Top Outstanding Shops -->
+        <section class="section full">
+          <div class="section-head">
+            <div class="section-title">🔥 Top Outstanding Shops</div>
+            <span class="section-sub" id="topOutCount">0</span>
+          </div>
+          <div id="topOutstanding" class="shop-list"></div>
+        </section>
+
+        <!-- NEW: Recent Payments -->
+        <section class="section full">
+          <div class="section-head">
+            <div class="section-title">💰 Recent Payments</div>
+            <span class="section-sub" id="recentPayCount">0</span>
+          </div>
+          <div id="recentPay" class="tx-list"></div>
+        </section>
+
         <div style="grid-column:1/-1" class="search">
           <input type="text" id="shopSearch" placeholder="Search shops..." />
         </div>
@@ -850,6 +889,7 @@
             <div class="section-title">🕒 Recent Transactions</div>
           </div>
           <div id="recentTx" class="tx-list"></div>
+          <button class="more-btn" id="moreTxBtn">View all transactions →</button>
         </section>
       </div>
       <div class="app-footer">Powered by <span>POS-LOOKMOBILE</span></div>
@@ -866,6 +906,13 @@
         <div class="section-head">
           <div class="section-title">🏪 All Shops</div>
           <span class="section-sub" id="shopCountLabel2">0</span>
+        </div>
+        <div class="filters" id="shopSort">
+          <button class="chip active" data-sort="az">A → Z</button>
+          <button class="chip" data-sort="za">Z → A</button>
+          <button class="chip" data-sort="high">Highest Balance</button>
+          <button class="chip" data-sort="low">Lowest Balance</button>
+          <button class="chip" data-sort="due">Due Day</button>
         </div>
         <div id="shopList2" class="shop-list"></div>
       </section>
@@ -1083,6 +1130,17 @@
   </div>
 </div>
 
+<!-- ================= ALL TRANSACTIONS MODAL ================= -->
+<div class="modal-backdrop hidden" id="modalAllTx">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>All Transactions</h2>
+      <button class="icon-btn" data-close="modalAllTx" type="button">✕</button>
+    </div>
+    <div id="allTxList" class="tx-list single"></div>
+  </div>
+</div>
+
 <!-- ================= SHOP MODAL ================= -->
 <div class="modal-backdrop hidden" id="modalShop">
   <div class="modal">
@@ -1203,6 +1261,44 @@
   </div>
 </div>
 
+<!-- ================= TRANSACTION EDIT MODAL ================= -->
+<div class="modal-backdrop hidden" id="modalTx">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="txModalTitle">Edit Transaction</h2>
+      <button class="icon-btn" data-close="modalTx" type="button">✕</button>
+    </div>
+    <form id="txForm" data-form-nav="true">
+      <input type="hidden" id="txId" />
+      <input type="hidden" id="txType" />
+      <div class="field"><label>Shop *</label><select id="txShop" required></select></div>
+      <div class="field hidden" id="txDescField"><label>Job Description *</label><input id="txDesc" /></div>
+      <div class="field hidden" id="txMethodField">
+        <label>Method</label>
+        <select id="txMethod">
+          <option value="Cash">💵 Cash</option>
+          <option value="Bank Transfer">🏦 Bank Transfer</option>
+          <option value="Online">💳 Online</option>
+          <option value="Cheque">📝 Cheque</option>
+          <option value="Other">📦 Other</option>
+        </select>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>Amount (Rs) *</label><input id="txAmount" type="number" min="0" step="0.01" required /></div>
+        <div class="field"><label>Date</label><input id="txDate" type="date" /></div>
+      </div>
+      <div class="field"><label>Time</label><input id="txTime" type="time" /></div>
+      <div class="field"><label>Notes</label><textarea id="txNotes" rows="2"></textarea></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-danger" id="deleteTxBtn">🗑️ Delete</button>
+        <div class="spacer"></div>
+        <button type="button" class="btn-ghost" data-close="modalTx">Cancel</button>
+        <button type="submit" class="btn-primary" id="saveTxBtn">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- ================= CLEAR DATA MODAL ================= -->
 <div class="modal-backdrop hidden" id="modalClear">
   <div class="modal">
@@ -1284,6 +1380,7 @@ const state = {
   user: null, profile: null, shops: [], txs: [],
   currentShopId: null, chartRange: 'daily', shopChartRange: 'daily',
   txFilter: 'all', txSearch: '', shopSearch: '',
+  shopSort: 'az',
   billRange: 'month', billFrom: null, billTo: null, billShopId: null,
   pendingLogoData: null,
   approvalStatus: null,
@@ -1355,7 +1452,6 @@ $('authForm').addEventListener('submit', async (e) => {
     if (authMode === 'login') await signInWithEmailAndPassword(auth, email, pass);
     else {
       const userCred = await createUserWithEmailAndPassword(auth, email, pass);
-      // Create the user doc with pending status
       try {
         await setDoc(doc(db, 'users', userCred.user.uid), {
           email: userCred.user.email,
@@ -1387,7 +1483,6 @@ $('rejectedLogoutBtn').addEventListener('click', async () => { if (confirm('Logo
 onAuthStateChanged(auth, async (user) => {
   state.user = user;
 
-  // Clear all subscriptions when signed out
   if (state.unsubUserDoc) { state.unsubUserDoc(); state.unsubUserDoc = null; }
   if (state.unsubShops) { state.unsubShops(); state.unsubShops = null; }
   if (state.unsubTxs) { state.unsubTxs(); state.unsubTxs = null; }
@@ -1399,17 +1494,14 @@ onAuthStateChanged(auth, async (user) => {
     return;
   }
 
-  // Update info shown on pending/rejected screens
   $('pendingEmail').textContent = user.email;
   $('rejectedEmail').textContent = user.email;
 
-  // Read the user's top-level doc
   try {
     const userRef = doc(db, 'users', user.uid);
     const snap = await getDoc(userRef);
 
     if (!snap.exists()) {
-      // No user doc — try to create it as pending
       try {
         await setDoc(userRef, {
           email: user.email,
@@ -1429,11 +1521,9 @@ onAuthStateChanged(auth, async (user) => {
     const data = snap.data();
     handleApprovalStatus(user, data);
 
-    // Subscribe for real-time status changes
     state.unsubUserDoc = onSnapshot(userRef, (s) => {
       if (!s.exists()) return;
       const newData = s.data();
-      // If status changed, re-route
       if (newData.status !== state.approvalStatus) {
         handleApprovalStatus(user, newData);
       }
@@ -1451,7 +1541,6 @@ function handleApprovalStatus(user, data){
 
   if (status === 'approved') {
     showScreen('appScreen');
-    // Load everything
     loadProfile(user.uid);
     subscribeAll(user.uid);
     applyBillRange('month');
@@ -1459,7 +1548,6 @@ function handleApprovalStatus(user, data){
   } else if (status === 'rejected') {
     showScreen('rejectedScreen');
   } else {
-    // pending
     showPending(user, data);
   }
 }
@@ -1483,7 +1571,6 @@ function updateAccountBadge(status){
   el.innerHTML = `<span class="dot"></span> ${txt}`;
 }
 
-/* Pending refresh button — re-fetch status */
 async function refreshApproval(){
   if (!state.user) return;
   try {
@@ -1813,7 +1900,9 @@ function renderAll(){
   renderNotifBanner();
   renderNotifBadge();
   renderShopList('shopList', 'shopCountLabel', state.shopSearch);
-  renderShopList('shopList2', 'shopCountLabel2', $('shopSearch2')?.value || '');
+  renderShopList2();
+  renderTopOutstanding();
+  renderRecentPayments();
   renderRecentTx();
   renderMainChart();
   populateShopSelects();
@@ -1837,13 +1926,29 @@ function renderDashboardStats(){
   $('statPaidMonth').textContent = 'Rs ' + fmt(paidMonth);
   $('statShops').textContent = state.shops.length;
 }
+
+/* ---- Shop list rendering with sorting ---- */
+function sortShops(list, mode){
+  const arr = [...list];
+  if (mode === 'az') arr.sort((a,b) => (a.name||'').localeCompare(b.name||''));
+  else if (mode === 'za') arr.sort((a,b) => (b.name||'').localeCompare(a.name||''));
+  else if (mode === 'high') arr.sort((a,b) => shopBalance(b.id) - shopBalance(a.id));
+  else if (mode === 'low') arr.sort((a,b) => shopBalance(a.id) - shopBalance(b.id));
+  else if (mode === 'due') arr.sort((a,b) => {
+    const da = a.dueDay ? Number(a.dueDay) : 999;
+    const db = b.dueDay ? Number(b.dueDay) : 999;
+    return da - db;
+  });
+  return arr;
+}
 function renderShopList(listId, countId, q){
   const list = $(listId); if (!list) return;
   q = (q || '').toLowerCase().trim();
-  const items = state.shops.filter(s => {
+  let items = state.shops.filter(s => {
     if (!q) return true;
     return (s.name||'').toLowerCase().includes(q) || (s.phone||'').includes(q);
   });
+  items = sortShops(items, state.shopSort);
   if (countId && $(countId)) $(countId).textContent = items.length + ' shops';
   if (!items.length) {
     list.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="ico">🏪</div>
@@ -1852,25 +1957,88 @@ function renderShopList(listId, countId, q){
         : 'No shops match your search.'}</p></div>`;
     return;
   }
-  list.innerHTML = items.map(s => {
-    const b = shopBalance(s.id);
+  list.innerHTML = items.map(s => shopCardHTML(s)).join('');
+}
+function renderShopList2(){
+  const list = $('shopList2'); if (!list) return;
+  const q = ($('shopSearch2')?.value || '').toLowerCase().trim();
+  let items = state.shops.filter(s => {
+    if (!q) return true;
+    return (s.name||'').toLowerCase().includes(q) || (s.phone||'').includes(q);
+  });
+  items = sortShops(items, state.shopSort);
+  $('shopCountLabel2').textContent = items.length + ' shops';
+  if (!items.length) {
+    list.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="ico">🏪</div>
+      <p>${state.shops.length === 0
+        ? 'No shops yet.<br>Tap <b>+</b> to add your first shop.'
+        : 'No shops match your search.'}</p></div>`;
+    return;
+  }
+  list.innerHTML = items.map(s => shopCardHTML(s)).join('');
+}
+function shopCardHTML(s){
+  const b = shopBalance(s.id);
+  return `<div class="shop-item" data-shop-id="${s.id}">
+    <div class="shop-avatar">${esc((s.name||'S').charAt(0).toUpperCase())}</div>
+    <div class="shop-info">
+      <div class="shop-name">${esc(s.name)}</div>
+      <div class="shop-meta">${s.phone ? '📞 '+esc(s.phone) : ''}${s.dueDay ? (s.phone?' • ':'')+'📅 Day '+s.dueDay : ''}</div>
+    </div>
+    <div class="shop-bal ${b>0?'c-amber':(b<0?'c-green':'')}">
+      Rs ${fmt(b)}<small>BALANCE</small>
+    </div>
+  </div>`;
+}
+
+/* ---- Top outstanding shops (5) ---- */
+function renderTopOutstanding(){
+  const list = $('topOutstanding'); if (!list) return;
+  const ranked = state.shops
+    .map(s => ({ shop: s, bal: shopBalance(s.id) }))
+    .filter(x => x.bal > 0.01)
+    .sort((a,b) => b.bal - a.bal)
+    .slice(0, 5);
+  $('topOutCount').textContent = ranked.length + ' shops';
+  if (!ranked.length) {
+    list.innerHTML = `<div class="empty small" style="grid-column:1/-1"><div class="ico">🎉</div>
+      <p>No outstanding balances. All shops are clear!</p></div>`;
+    return;
+  }
+  list.innerHTML = ranked.map((x, i) => {
+    const s = x.shop;
     return `<div class="shop-item" data-shop-id="${s.id}">
-      <div class="shop-avatar">${esc((s.name||'S').charAt(0).toUpperCase())}</div>
+      <div class="shop-rank">${i+1}</div>
       <div class="shop-info">
         <div class="shop-name">${esc(s.name)}</div>
         <div class="shop-meta">${s.phone ? '📞 '+esc(s.phone) : ''}${s.dueDay ? (s.phone?' • ':'')+'📅 Day '+s.dueDay : ''}</div>
       </div>
-      <div class="shop-bal ${b>0?'c-amber':(b<0?'c-green':'')}">
-        Rs ${fmt(b)}<small>BALANCE</small>
+      <div class="shop-bal c-amber">
+        Rs ${fmt(x.bal)}<small>OUTSTANDING</small>
       </div>
     </div>`;
   }).join('');
 }
+
+/* ---- Recent payments (3) ---- */
+function renderRecentPayments(){
+  const list = $('recentPay'); if (!list) return;
+  const recent = state.txs.filter(t => t.type === 'payment').slice(0, 3);
+  $('recentPayCount').textContent = recent.length + ' payments';
+  if (!recent.length) {
+    list.innerHTML = `<div class="empty small" style="grid-column:1/-1"><div class="ico">💰</div>
+      <p>No payments recorded yet.</p></div>`;
+    return;
+  }
+  list.innerHTML = recent.map(t => txCardHTML(t, true)).join('');
+}
+
+/* ---- Recent transactions (3) ---- */
 function renderRecentTx(){
   const list = $('recentTx');
-  const recent = state.txs.slice(0, 6);
+  const recent = state.txs.slice(0, 3);
   if (!recent.length) {
-    list.innerHTML = `<div class="empty" style="padding:26px 10px;grid-column:1/-1"><div class="ico">📋</div><p>No transactions yet.</p></div>`;
+    list.innerHTML = `<div class="empty small" style="padding:26px 10px;grid-column:1/-1"><div class="ico">📋</div><p>No transactions yet.</p></div>`;
     return;
   }
   list.innerHTML = recent.map(t => txCardHTML(t, true)).join('');
@@ -1880,7 +2048,7 @@ function txCardHTML(t, showShop){
   const shopName = shop ? shop.name : 'Deleted Shop';
   const isJob = t.type === 'job';
   const title = isJob ? (t.description || 'Job') : (t.method || 'Payment');
-  return `<div class="tx" ${showShop?`data-shop-open="${t.shopId}"`:''} ${showShop?'style="cursor:pointer"':''}>
+  return `<div class="tx" data-tx-id="${t.id}" ${showShop?`data-shop-open="${t.shopId}"`:''} style="cursor:pointer">
     <div class="tx-icon ${isJob?'job':'payment'}">${isJob?'🔧':'💰'}</div>
     <div class="tx-main">
       ${showShop?`<div class="tx-title">${esc(shopName)}</div><div class="tx-ref">${esc(t.refNo)}</div>`:''}
@@ -2383,7 +2551,19 @@ $('shopList2').addEventListener('click', e => {
   const item = e.target.closest('[data-shop-id]');
   if (item) openShop(item.dataset.shopId);
 });
+$('topOutstanding').addEventListener('click', e => {
+  const item = e.target.closest('[data-shop-id]');
+  if (item) openShop(item.dataset.shopId);
+});
 $('recentTx').addEventListener('click', e => {
+  const txEl = e.target.closest('[data-tx-id]');
+  if (txEl) { openTxModal(txEl.dataset.txId); return; }
+  const el = e.target.closest('[data-shop-open]');
+  if (el && el.dataset.shopOpen) openShop(el.dataset.shopOpen);
+});
+$('recentPay').addEventListener('click', e => {
+  const txEl = e.target.closest('[data-tx-id]');
+  if (txEl) { openTxModal(txEl.dataset.txId); return; }
   const el = e.target.closest('[data-shop-open]');
   if (el && el.dataset.shopOpen) openShop(el.dataset.shopOpen);
 });
@@ -2399,9 +2579,20 @@ $('shopSearch').addEventListener('input', e => {
 $('shopSearch2').addEventListener('input', e => {
   clearTimeout(shopSearchTimer);
   shopSearchTimer = setTimeout(() => {
-    renderShopList('shopList2', 'shopCountLabel2', e.target.value);
+    renderShopList2();
   }, 150);
 });
+
+/* ---- Shop sort chips ---- */
+$('shopSort').addEventListener('click', e => {
+  const c = e.target.closest('.chip'); if (!c) return;
+  state.shopSort = c.dataset.sort;
+  document.querySelectorAll('#shopSort .chip').forEach(x => x.classList.toggle('active', x === c));
+  renderShopList('shopList', 'shopCountLabel', state.shopSearch);
+  renderShopList2();
+  toast('Sorted: ' + c.textContent.trim());
+});
+
 $('chartRange').addEventListener('click', e => {
   const b = e.target.closest('.rc'); if (!b) return;
   state.chartRange = b.dataset.range;
@@ -2461,6 +2652,26 @@ $('notifList').addEventListener('click', e => {
     closeModal('modalNotifs');
     setTimeout(() => openShop(shopId), 220);
   }
+});
+
+/* ================= VIEW ALL TRANSACTIONS ================= */
+function renderAllTxModal(){
+  const list = $('allTxList');
+  const txs = state.txs.slice(0, 200);
+  if (!txs.length) {
+    list.innerHTML = `<div class="empty" style="padding:40px 16px"><div class="ico">📋</div><p>No transactions yet.</p></div>`;
+    return;
+  }
+  list.innerHTML = `<div style="text-align:right;font-size:11px;color:var(--muted);margin-bottom:8px;font-weight:600">Showing ${txs.length} of ${state.txs.length}</div>` +
+    txs.map(t => txCardHTML(t, true)).join('');
+}
+$('moreTxBtn').addEventListener('click', () => {
+  renderAllTxModal();
+  openModal('modalAllTx');
+});
+$('allTxList').addEventListener('click', e => {
+  const txEl = e.target.closest('[data-tx-id]');
+  if (txEl) { closeModal('modalAllTx'); setTimeout(() => openTxModal(txEl.dataset.txId), 200); }
 });
 
 /* ================= CLEAR ALL DATA ================= */
@@ -2554,6 +2765,105 @@ $('exportBtn').addEventListener('click', () => {
   a.click();
   URL.revokeObjectURL(url);
   toast('📤 Exported');
+});
+
+/* ================= TRANSACTION EDIT / DELETE ================= */
+function openTxModal(txId){
+  const t = state.txs.find(x => x.id === txId);
+  if (!t) { toast('Transaction not found'); return; }
+  const isJob = t.type === 'job';
+
+  $('txForm').reset();
+  $('txId').value = t.id;
+  $('txType').value = t.type;
+  $('txModalTitle').textContent = isJob ? 'Edit Job' : 'Edit Payment';
+
+  const opts = state.shops.map(s =>
+    `<option value="${s.id}">${esc(s.name)}${s.phone?' — '+esc(s.phone):''}</option>`
+  ).join('');
+  $('txShop').innerHTML = '<option value="">-- Select a shop --</option>' + opts;
+  $('txShop').value = t.shopId || '';
+
+  $('txDescField').classList.toggle('hidden', !isJob);
+  $('txMethodField').classList.toggle('hidden', isJob);
+
+  if (isJob) {
+    $('txDesc').value = t.description || '';
+    $('txDesc').required = true;
+  } else {
+    $('txDesc').required = false;
+    $('txMethod').value = t.method || 'Cash';
+  }
+
+  $('txAmount').value = (t.amount ?? '');
+  $('txDate').value = t.date || todayStr();
+  $('txTime').value = t.time || nowTime();
+  $('txNotes').value = t.notes || '';
+
+  openModal('modalTx');
+  setTimeout(() => (isJob ? $('txDesc') : $('txAmount')).focus(), 120);
+}
+
+$('txForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!state.user) return;
+  const id = $('txId').value;
+  const type = $('txType').value;
+  const shopId = $('txShop').value;
+  if (!shopId) { toast('Select a shop'); return; }
+
+  const btn = $('saveTxBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Saving...';
+  try {
+    const data = {
+      shopId,
+      type,
+      amount: Number($('txAmount').value) || 0,
+      date: $('txDate').value || todayStr(),
+      time: $('txTime').value || nowTime(),
+      notes: $('txNotes').value.trim(),
+      updatedAt: Date.now()
+    };
+    if (type === 'job') data.description = $('txDesc').value.trim();
+    else data.method = $('txMethod').value;
+
+    await updateDoc(doc(db, 'users', state.user.uid, 'transactions', id), data);
+    toast('✓ Transaction updated');
+    closeModal('modalTx');
+  } catch(err) {
+    console.error(err);
+    toast('Error updating transaction');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Save';
+  }
+});
+
+$('deleteTxBtn').addEventListener('click', async () => {
+  const id = $('txId').value;
+  if (!id) return;
+  if (!confirm('Delete this transaction? This cannot be undone.')) return;
+
+  const btn = $('deleteTxBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>';
+  try {
+    await deleteDoc(doc(db, 'users', state.user.uid, 'transactions', id));
+    toast('🗑️ Transaction deleted');
+    closeModal('modalTx');
+  } catch(err) {
+    console.error(err);
+    toast('Error deleting transaction');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🗑️ Delete';
+  }
+});
+
+$('detailTx').addEventListener('click', e => {
+  const el = e.target.closest('[data-tx-id]');
+  if (el && el.dataset.txId) openTxModal(el.dataset.txId);
 });
 
 console.log('✅ Shop Ledger loaded');
