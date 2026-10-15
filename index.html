@@ -70,6 +70,7 @@
     border-color:var(--accent);box-shadow:0 0 0 3px rgba(99,102,241,.15);
   }
   .field textarea{resize:vertical;min-height:52px}
+  .field-hint{font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.6}
   .btn-primary{
     width:100%;padding:13px;border-radius:11px;font-weight:700;font-size:14.5px;color:#fff;
     background:linear-gradient(135deg,var(--accent),var(--accent-2));
@@ -88,9 +89,7 @@
   .msg.ok{color:#6ee7b7}
 
   /* Pending / Rejected screens */
-  .status-screen{
-    min-height:100dvh;display:grid;place-items:center;padding:24px;
-  }
+  .status-screen{min-height:100dvh;display:grid;place-items:center;padding:24px}
   .status-card{
     width:100%;max-width:420px;
     background:linear-gradient(180deg, rgba(28,33,48,.92), rgba(20,24,36,.96));
@@ -101,8 +100,7 @@
   }
   .status-icon{
     width:96px;height:96px;margin:0 auto 22px;
-    border-radius:28px;display:grid;place-items:center;font-size:48px;
-    position:relative;
+    border-radius:28px;display:grid;place-items:center;font-size:48px;position:relative;
   }
   .status-icon.pending{
     background:linear-gradient(135deg, rgba(245,158,11,.2), rgba(245,158,11,.05));
@@ -219,13 +217,23 @@
   .rc.active{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff}
   .chart-wrap{height:200px;position:relative}
 
+  /* ============ SEARCH WITH CLEAR ============ */
   .search{position:relative;margin-bottom:12px}
   .search input{
-    width:100%;padding:11px 13px 11px 38px;border-radius:11px;
+    width:100%;padding:11px 40px 11px 38px;border-radius:11px;
     background:var(--surface);border:1px solid var(--border);outline:none;font-size:13.5px;transition:.2s;
   }
   .search input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(99,102,241,.12)}
   .search::before{content:"🔍";position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:12px;opacity:.6;pointer-events:none}
+  .search-clear{
+    position:absolute;right:8px;top:50%;transform:translateY(-50%);
+    width:24px;height:24px;border-radius:50%;
+    display:grid;place-items:center;font-size:11px;line-height:1;
+    background:var(--surface-3);color:var(--muted);
+    border:1px solid var(--border);transition:.2s;z-index:2;
+  }
+  .search-clear:hover{color:var(--text);background:var(--surface-2);border-color:var(--accent)}
+  .search-clear.hidden{display:none}
 
   .filters{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;margin-bottom:12px;scrollbar-width:none}
   .filters::-webkit-scrollbar{display:none}
@@ -264,8 +272,7 @@
   .tx-list{display:flex;flex-direction:column;gap:7px}
   .tx{
     display:flex;gap:10px;padding:10px 11px;align-items:flex-start;
-    background:var(--surface-2);border:1px solid var(--border);border-radius:11px;
-    transition:.2s;
+    background:var(--surface-2);border:1px solid var(--border);border-radius:11px;transition:.2s;
   }
   .tx:active{transform:scale(.99)}
   .tx-icon{
@@ -287,8 +294,7 @@
     width:100%;padding:11px;border-radius:11px;margin-top:10px;
     background:var(--surface-2);border:1px dashed var(--border);
     color:var(--muted);font-weight:700;font-size:12.5px;
-    display:flex;align-items:center;justify-content:center;gap:6px;
-    transition:.2s;
+    display:flex;align-items:center;justify-content:center;gap:6px;transition:.2s;
   }
   .more-btn:hover{color:var(--text);border-color:var(--accent);background:rgba(99,102,241,.06)}
 
@@ -316,11 +322,9 @@
   .bn-item.active{color:var(--text);background:var(--surface-2)}
 
   .sidebar{
-    display:none;
-    position:fixed;left:0;top:0;bottom:0;width:240px;z-index:50;
+    display:none;position:fixed;left:0;top:0;bottom:0;width:240px;z-index:50;
     background:linear-gradient(180deg,var(--surface),var(--bg));
-    border-right:1px solid var(--border);
-    padding:20px 14px;
+    border-right:1px solid var(--border);padding:20px 14px;
     flex-direction:column;gap:8px;
   }
   .sb-brand{
@@ -350,13 +354,11 @@
   .sb-foot span{background:linear-gradient(135deg,var(--accent),var(--accent-2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 
   .fab{
-    position:fixed;right:16px;
-    bottom:calc(78px + var(--safe-bottom));
+    position:fixed;right:16px;bottom:calc(78px + var(--safe-bottom));
     width:56px;height:56px;border-radius:18px;z-index:44;
     display:grid;place-items:center;font-size:26px;font-weight:300;color:#fff;
     background:linear-gradient(135deg,var(--accent),var(--accent-2));
-    box-shadow:0 12px 30px rgba(99,102,241,.55);
-    transition:.2s;
+    box-shadow:0 12px 30px rgba(99,102,241,.55);transition:.2s;
   }
   .fab:active{transform:scale(.9)}
 
@@ -402,8 +404,7 @@
 
   .modal-backdrop{
     position:fixed;inset:0;z-index:60;background:rgba(5,7,11,.72);backdrop-filter:blur(6px);
-    display:flex;align-items:flex-end;justify-content:center;animation:fadeIn .2s ease;
-    padding:0;
+    display:flex;align-items:flex-end;justify-content:center;animation:fadeIn .2s ease;padding:0;
   }
   @media (min-width:520px){ .modal-backdrop{align-items:center;padding:20px} }
   .modal{
@@ -429,8 +430,7 @@
   .notif-item{
     background:linear-gradient(135deg, rgba(239,68,68,.09), rgba(245,158,11,.05));
     border:1px solid rgba(239,68,68,.28);
-    border-radius:13px;padding:13px;
-    animation:fade .3s ease;
+    border-radius:13px;padding:13px;animation:fade .3s ease;
   }
   .notif-head{display:flex;gap:11px;align-items:flex-start;margin-bottom:11px}
   .notif-ico{
@@ -446,16 +446,14 @@
     background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);
     color:#fca5a5;font-weight:800;font-size:13px;letter-spacing:-.2px;
   }
-  .notif-actions{display:flex;gap:6px;flex-wrap:wrap}
+  .notif-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}
   .notif-actions button{
-    padding:8px 11px;border-radius:9px;font-size:11px;font-weight:700;
-    display:inline-flex;align-items:center;gap:4px;transition:.2s;
-    letter-spacing:.1px;
+    padding:9px 10px;border-radius:9px;font-size:11.5px;font-weight:700;
+    display:inline-flex;align-items:center;justify-content:center;gap:4px;transition:.2s;
+    letter-spacing:.1px;white-space:nowrap;
   }
   .notif-actions button:active{transform:scale(.95)}
-  .notif-skip{
-    background:var(--surface-2);border:1px solid var(--border);color:var(--muted);
-  }
+  .notif-skip{background:var(--surface-2);border:1px solid var(--border);color:var(--muted)}
   .notif-skip:hover{color:var(--text);border-color:#3a4256}
   .notif-pay{
     background:linear-gradient(135deg, rgba(16,185,129,.2), rgba(16,185,129,.1));
@@ -473,12 +471,9 @@
   .notif-view:hover{background:rgba(99,102,241,.2)}
   .notif-more{
     text-align:center;padding:12px;font-size:12px;color:var(--muted);
-    background:var(--surface-2);border:1px dashed var(--border);border-radius:11px;
-    margin-top:4px;
+    background:var(--surface-2);border:1px dashed var(--border);border-radius:11px;margin-top:4px;
   }
-  .notif-empty{
-    text-align:center;padding:50px 20px;color:var(--muted);
-  }
+  .notif-empty{text-align:center;padding:50px 20px;color:var(--muted)}
   .notif-empty .ico{font-size:52px;opacity:.4;margin-bottom:14px}
   .notif-empty h3{font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px}
   .notif-empty p{font-size:12.5px;line-height:1.6}
@@ -536,8 +531,7 @@
     display:grid;place-items:center;font-size:44px;
     background:linear-gradient(135deg,var(--accent),var(--accent-2));
     border:2px solid rgba(255,255,255,.1);
-    box-shadow:0 10px 30px rgba(99,102,241,.45);
-    position:relative;
+    box-shadow:0 10px 30px rgba(99,102,241,.45);position:relative;
   }
   .profile-logo img{width:100%;height:100%;object-fit:cover}
   .profile-name{font-size:17px;font-weight:800;letter-spacing:-.3px}
@@ -553,10 +547,8 @@
 
   .upload-area{
     display:flex;flex-direction:column;align-items:center;gap:12px;
-    padding:20px 16px;
-    background:var(--surface-2);border:2px dashed var(--border);
-    border-radius:16px;cursor:pointer;transition:.2s;
-    text-align:center;
+    padding:20px 16px;background:var(--surface-2);border:2px dashed var(--border);
+    border-radius:16px;cursor:pointer;transition:.2s;text-align:center;
   }
   .upload-area:hover{border-color:var(--accent);background:rgba(99,102,241,.05)}
   .upload-area .up-preview{
@@ -592,25 +584,15 @@
   .danger-counts{font-size:12px;color:#c7cbd6;line-height:1.9;margin-top:6px}
   .danger-counts b{color:#fca5a5}
 
-  /* Account status badge in settings */
   .acct-status{
     display:inline-flex;align-items:center;gap:6px;
     padding:5px 11px;border-radius:20px;font-size:11px;font-weight:700;
     letter-spacing:.3px;text-transform:uppercase;
   }
-  .acct-status.approved{
-    background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.4);color:#6ee7b7;
-  }
-  .acct-status.pending{
-    background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.4);color:#fcd34d;
-  }
-  .acct-status.rejected{
-    background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:#fca5a5;
-  }
-  .acct-status .dot{
-    width:6px;height:6px;border-radius:50%;background:currentColor;
-    box-shadow:0 0 6px currentColor;
-  }
+  .acct-status.approved{background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.4);color:#6ee7b7}
+  .acct-status.pending{background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.4);color:#fcd34d}
+  .acct-status.rejected{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:#fca5a5}
+  .acct-status .dot{width:6px;height:6px;border-radius:50%;background:currentColor;box-shadow:0 0 6px currentColor}
 
   .spinner{
     width:14px;height:14px;border:2px solid rgba(255,255,255,.3);
@@ -641,6 +623,7 @@
     .sheet-btn .slb{font-size:12px}
     .modal{max-width:520px}
     .fab{right:24px;bottom:calc(88px + var(--safe-bottom));width:60px;height:60px}
+    .notif-actions{grid-template-columns:repeat(4,1fr)}
   }
 
   @media (min-width: 1024px) {
@@ -856,7 +839,6 @@
           <div class="chart-wrap"><canvas id="mainChart"></canvas></div>
         </section>
 
-        <!-- NEW: Top Outstanding Shops -->
         <section class="section full">
           <div class="section-head">
             <div class="section-title">🔥 Top Outstanding Shops</div>
@@ -865,7 +847,6 @@
           <div id="topOutstanding" class="shop-list"></div>
         </section>
 
-        <!-- NEW: Recent Payments -->
         <section class="section full">
           <div class="section-head">
             <div class="section-title">💰 Recent Payments</div>
@@ -876,6 +857,7 @@
 
         <div style="grid-column:1/-1" class="search">
           <input type="text" id="shopSearch" placeholder="Search shops..." />
+          <button type="button" class="search-clear hidden" data-clear-for="shopSearch" aria-label="Clear search">✕</button>
         </div>
         <section class="section" style="grid-column:1/-1">
           <div class="section-head">
@@ -901,6 +883,7 @@
     <div class="container">
       <div class="search">
         <input type="text" id="shopSearch2" placeholder="Search shops..." />
+        <button type="button" class="search-clear hidden" data-clear-for="shopSearch2" aria-label="Clear search">✕</button>
       </div>
       <section class="section">
         <div class="section-head">
@@ -912,7 +895,7 @@
           <button class="chip" data-sort="za">Z → A</button>
           <button class="chip" data-sort="high">Highest Balance</button>
           <button class="chip" data-sort="low">Lowest Balance</button>
-          <button class="chip" data-sort="due">Due Day</button>
+          <button class="chip" data-sort="due">Due Days</button>
         </div>
         <div id="shopList2" class="shop-list"></div>
       </section>
@@ -982,8 +965,9 @@
       <section class="section">
         <div class="section-head"><div class="section-title">🔔 Notifications</div></div>
         <div style="font-size:12.5px;color:var(--muted);line-height:1.8;margin-bottom:10px">
-          Payment-due notifications appear in the app's 🔔 bell.<br>
-          Skip a notification to hide it for this month.<br>
+          ඔයාගේ හැම shop එකකටත් <b style="color:#c7d2fe">Due Days</b> set කරන්න.<br>
+          Job එකක් add කරන දවසේ ඉඳන් ඒ ගාන පස්සේ notification එනවා.<br>
+          Skip a notification to hide it for that due cycle.<br>
           Mark as Paid to add a payment directly.
         </div>
         <button class="btn-ghost" style="width:100%" id="resetNotifsBtn">↺ Reset All Skipped Notifications</button>
@@ -1052,6 +1036,7 @@
                 <span class="stat-value c-green" id="detailPayTotal" style="font-size:15px">Rs 0</span>
               </div>
             </div>
+            <div id="detailDueInfo" style="margin-top:10px;padding:10px;background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.25);border-radius:10px;font-size:11.5px;color:var(--muted);line-height:1.6"></div>
           </div>
           <div class="filters">
             <button class="chip" data-shop-action="job" style="background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;border-color:transparent">🔧 Add Job</button>
@@ -1083,6 +1068,7 @@
           </div>
           <div class="search" style="margin-top:8px">
             <input type="text" id="txSearch" placeholder="Search transactions..." />
+            <button type="button" class="search-clear hidden" data-clear-for="txSearch" aria-label="Clear search">✕</button>
           </div>
           <div id="detailTx" class="tx-list single"></div>
         </section>
@@ -1153,7 +1139,15 @@
       <div class="field"><label>Shop Name *</label><input id="sName" required placeholder="Nimal Phone Center" /></div>
       <div class="grid2">
         <div class="field"><label>Phone</label><input id="sPhone" type="tel" placeholder="07X XXX XXXX" /></div>
-        <div class="field"><label>Due Day (1-31)</label><input id="sDueDay" type="number" min="1" max="31" placeholder="25" /></div>
+        <div class="field"><label>Due Days</label><input id="sDueDays" type="number" min="0" max="365" placeholder="5" /></div>
+      </div>
+      <div class="field">
+        <label>ℹ️ Due Days එක වැඩ කරන විදිය</label>
+        <div class="field-hint" style="padding:10px;background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.25);border-radius:10px">
+          📌 Job එකක් එකතු කරන දවසේ ඉඳන් <b>Due Days</b> ගාන පස්සේ notification එක එනවා.<br><br>
+          <b>උදා:</b> අද <b>Oct 15</b> → Due Days = <b>5</b> → Job add → <b>Oct 20</b> ට notify ✅<br>
+          <b>0</b> දැම්මොත් notification off.
+        </div>
       </div>
       <div class="field"><label>Address</label><input id="sAddress" placeholder="Street, City" /></div>
       <div class="field"><label>Notes</label><textarea id="sNotes" rows="2" placeholder="Additional info..."></textarea></div>
@@ -1360,10 +1354,16 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c =>
   ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const nf = new Intl.NumberFormat('en-LK', { maximumFractionDigits: 2 });
 const fmt = n => nf.format(Number(n) || 0);
-const todayStr = () => {
-  const d = new Date();
-  return new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10);
+
+/* ============ LOCAL-TIME DATE HELPERS ============ */
+const localDateStr = (d) => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
 };
+const localMonthKey = (d) => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+const todayStr = () => localDateStr(new Date());
 const nowTime = () => {
   const d = new Date();
   return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
@@ -1374,6 +1374,18 @@ function formatDate(str){
   const [y,m,d] = str.split('-');
   const M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   return `${parseInt(d,10)} ${M[parseInt(m,10)-1]} ${y}`;
+}
+/* Add days to a YYYY-MM-DD string, returns YYYY-MM-DD */
+function addDays(dateStr, days){
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + Number(days));
+  return localDateStr(d);
+}
+/* Days between two YYYY-MM-DD (b - a) */
+function daysBetween(aStr, bStr){
+  const a = new Date(aStr + 'T00:00:00').getTime();
+  const b = new Date(bStr + 'T00:00:00').getTime();
+  return Math.round((b - a) / (1000*60*60*24));
 }
 
 const state = {
@@ -1397,6 +1409,12 @@ function toast(msg){
   document.body.appendChild(el);
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.remove(), 2600);
+}
+
+/* ============ BROWSER TAB TITLE BADGE ============ */
+const BASE_TITLE = 'Shop Ledger';
+function updateDocTitle(count){
+  document.title = count > 0 ? `(${count}) ${BASE_TITLE}` : BASE_TITLE;
 }
 
 /* ================= SCREEN SWITCHING ================= */
@@ -1490,6 +1508,7 @@ onAuthStateChanged(auth, async (user) => {
   if (!user) {
     state.profile = null; state.shops = []; state.txs = [];
     state.approvalStatus = null;
+    updateDocTitle(0);
     showScreen('authScreen');
     return;
   }
@@ -1546,8 +1565,10 @@ function handleApprovalStatus(user, data){
     applyBillRange('month');
     updateAccountBadge('approved');
   } else if (status === 'rejected') {
+    updateDocTitle(0);
     showScreen('rejectedScreen');
   } else {
+    updateDocTitle(0);
     showPending(user, data);
   }
 }
@@ -1766,43 +1787,96 @@ function genRef(type){
   const rand = String(Math.floor(Math.random()*10000)).padStart(4,'0');
   return (type === 'job' ? 'LMJ-' : 'LMP-') + ymd + '-' + rand;
 }
+/* Latest job of a shop (returns tx object or null) */
+function latestJobOf(shopId){
+  const jobs = state.txs.filter(t => t.shopId === shopId && t.type === 'job' && t.date);
+  if (!jobs.length) return null;
+  jobs.sort((a,b) => ((a.date||'') + ' ' + (a.time||'')).localeCompare((b.date||'') + ' ' + (b.time||'')));
+  return jobs[jobs.length - 1];
+}
 
 /* ============================================================
-   NOTIFICATION SYSTEM
+   NOTIFICATION SYSTEM — Due Days after job
    ============================================================ */
 function getSkippedKey(){ return 'notifSkipped_' + (state.user?.uid || 'anon'); }
+function getSeenKey(){ return 'notifSeen_' + (state.user?.uid || 'anon'); }
 function loadSkipped(){
   try { return JSON.parse(localStorage.getItem(getSkippedKey()) || '{}'); }
   catch { return {}; }
 }
 function saveSkipped(obj){ localStorage.setItem(getSkippedKey(), JSON.stringify(obj)); }
+function loadSeen(){
+  try { return JSON.parse(localStorage.getItem(getSeenKey()) || '{}'); }
+  catch { return {}; }
+}
+function saveSeen(obj){ localStorage.setItem(getSeenKey(), JSON.stringify(obj)); }
 
 function getNotifications(){
-  const today = new Date();
-  const day = today.getDate();
-  const monthKey = today.toISOString().slice(0,7);
+  const today = todayStr();
   const skipped = loadSkipped();
   const notifs = [];
+
   state.shops.forEach(shop => {
-    if (!shop.dueDay) return;
-    const dd = Number(shop.dueDay);
-    if (!dd || day < dd) return;
+    const dueDays = Math.max(0, Math.floor(Number(shop.dueDays) || 0));
+    if (!dueDays) return;
+
+    const latestJob = latestJobOf(shop.id);
+    if (!latestJob || !latestJob.date) return;
+
+    // Due date = latest job date + dueDays
+    const dueDateStr = addDays(latestJob.date, dueDays);
+
+    // Not yet due → skip
+    if (today < dueDateStr) return;
+
+    // Only if balance > 0
     const bal = shopBalance(shop.id);
     if (bal <= 0.01) return;
-    const skipKey = shop.id + '_' + monthKey;
+
+    // Skip key ties to this specific due cycle (latest job date)
+    const skipKey = shop.id + '_' + latestJob.date + '_' + dueDateStr;
     if (skipped[skipKey]) return;
-    notifs.push({ shop, bal, skipKey, dueDay: dd });
+
+    const daysOverdue = daysBetween(dueDateStr, today);
+
+    notifs.push({
+      shop, bal, skipKey,
+      dueDateStr, dueDays, daysOverdue,
+      latestJobDate: latestJob.date,
+      latestJobRef: latestJob.refNo
+    });
   });
+
   notifs.sort((a,b) => b.bal - a.bal);
   return notifs;
 }
-function renderNotifBadge(){
-  const notifs = getNotifications();
-  const badge = $('notifBadge');
-  if (!notifs.length) { badge.classList.add('hidden'); return; }
-  badge.textContent = notifs.length > 99 ? '99+' : notifs.length;
-  badge.classList.remove('hidden');
+
+/* Unseen = notifications whose skipKey hasn't been viewed yet */
+function getUnseenNotifications(){
+  const all = getNotifications();
+  const seen = loadSeen();
+  return all.filter(n => !seen[n.skipKey]);
 }
+
+function markAllNotifsSeen(){
+  const all = getNotifications();
+  if (!all.length) return;
+  const seen = loadSeen();
+  all.forEach(n => { seen[n.skipKey] = Date.now(); });
+  saveSeen(seen);
+}
+
+function renderNotifBadge(){
+  const unseenCount = getUnseenNotifications().length;
+  const badge = $('notifBadge');
+  if (!unseenCount) badge.classList.add('hidden');
+  else {
+    badge.textContent = unseenCount > 99 ? '99+' : unseenCount;
+    badge.classList.remove('hidden');
+  }
+  updateDocTitle(unseenCount);
+}
+
 function renderNotifBanner(){
   const notifs = getNotifications();
   const banner = $('notifBanner');
@@ -1815,7 +1889,7 @@ function renderNotifBanner(){
       <div style="flex:1">
         <strong>${notifs.length} payment${notifs.length>1?'s':''} due</strong>
         <ul>
-          ${shown.map(n => `<li>${esc(n.shop.name)} — Rs ${fmt(n.bal)}</li>`).join('')}
+          ${shown.map(n => `<li>${esc(n.shop.name)} — Rs ${fmt(n.bal)}${n.daysOverdue>0?' <span style="color:#fca5a5">('+n.daysOverdue+'d late)</span>':''}</li>`).join('')}
           ${more > 0 ? `<li>+ ${more} more...</li>` : ''}
         </ul>
         <div class="tap-hint">👆 Tap to view all & manage</div>
@@ -1823,6 +1897,12 @@ function renderNotifBanner(){
     </div>`;
   banner.querySelector('.notif-banner').addEventListener('click', openNotifDrawer);
 }
+
+function notifStatusText(n){
+  if (n.daysOverdue > 0) return `⚠️ Overdue by ${n.daysOverdue} day${n.daysOverdue===1?'':'s'}`;
+  return '📅 Due today';
+}
+
 function renderNotifList(){
   const all = getNotifications();
   const list = $('notifList');
@@ -1831,7 +1911,7 @@ function renderNotifList(){
       <div class="notif-empty">
         <div class="ico">✅</div>
         <h3>All Caught Up!</h3>
-        <p>No pending payment reminders right now.<br>You'll see them here when shop due-days arrive.</p>
+        <p>No pending payment reminders right now.<br>They'll appear when a shop reaches its due days after a job.</p>
       </div>`;
     return;
   }
@@ -1841,11 +1921,14 @@ function renderNotifList(){
   html += shown.map(n => `
     <div class="notif-item">
       <div class="notif-head">
-        <div class="notif-ico">⏰</div>
+        <div class="notif-ico">${n.daysOverdue>0?'⚠️':'⏰'}</div>
         <div class="notif-info">
           <div class="notif-shop">${esc(n.shop.name)}</div>
           <div class="notif-detail">
-            📅 Due day ${n.dueDay}${n.shop.phone ? ' • 📞 '+esc(n.shop.phone) : ''}
+            ${notifStatusText(n)}<br>
+            🔧 Last job: ${formatDate(n.latestJobDate)}<br>
+            📅 Due: ${formatDate(n.dueDateStr)} <span style="opacity:.7">(+${n.dueDays} days)</span>
+            ${n.shop.phone ? '<br>📞 '+esc(n.shop.phone) : ''}
           </div>
           <div class="notif-bal">Rs ${fmt(n.bal)} outstanding</div>
         </div>
@@ -1861,15 +1944,20 @@ function renderNotifList(){
   if (more > 0) html += `<div class="notif-more">+ ${more} more notification${more>1?'s':''} not shown (max ${NOTIF_MAX})</div>`;
   list.innerHTML = html;
 }
+
 function openNotifDrawer(){
+  markAllNotifsSeen();
+  renderNotifBadge();
+  renderNotifBanner();
   renderNotifList();
   openModal('modalNotifs');
 }
+
 function skipNotif(skipKey){
   const skipped = loadSkipped();
   skipped[skipKey] = Date.now();
   saveSkipped(skipped);
-  toast('⏭ Skipped for this month');
+  toast('⏭ Skipped');
   renderNotifList();
   renderNotifBanner();
   renderNotifBadge();
@@ -1935,8 +2023,8 @@ function sortShops(list, mode){
   else if (mode === 'high') arr.sort((a,b) => shopBalance(b.id) - shopBalance(a.id));
   else if (mode === 'low') arr.sort((a,b) => shopBalance(a.id) - shopBalance(b.id));
   else if (mode === 'due') arr.sort((a,b) => {
-    const da = a.dueDay ? Number(a.dueDay) : 999;
-    const db = b.dueDay ? Number(b.dueDay) : 999;
+    const da = Number(a.dueDays) || 9999;
+    const db = Number(b.dueDays) || 9999;
     return da - db;
   });
   return arr;
@@ -1979,11 +2067,15 @@ function renderShopList2(){
 }
 function shopCardHTML(s){
   const b = shopBalance(s.id);
+  const meta = [
+    s.phone ? '📞 '+esc(s.phone) : '',
+    s.dueDays ? '⏱ '+s.dueDays+' days' : ''
+  ].filter(Boolean).join(' • ');
   return `<div class="shop-item" data-shop-id="${s.id}">
     <div class="shop-avatar">${esc((s.name||'S').charAt(0).toUpperCase())}</div>
     <div class="shop-info">
       <div class="shop-name">${esc(s.name)}</div>
-      <div class="shop-meta">${s.phone ? '📞 '+esc(s.phone) : ''}${s.dueDay ? (s.phone?' • ':'')+'📅 Day '+s.dueDay : ''}</div>
+      <div class="shop-meta">${meta}</div>
     </div>
     <div class="shop-bal ${b>0?'c-amber':(b<0?'c-green':'')}">
       Rs ${fmt(b)}<small>BALANCE</small>
@@ -2011,7 +2103,7 @@ function renderTopOutstanding(){
       <div class="shop-rank">${i+1}</div>
       <div class="shop-info">
         <div class="shop-name">${esc(s.name)}</div>
-        <div class="shop-meta">${s.phone ? '📞 '+esc(s.phone) : ''}${s.dueDay ? (s.phone?' • ':'')+'📅 Day '+s.dueDay : ''}</div>
+        <div class="shop-meta">${s.phone ? '📞 '+esc(s.phone) : ''}${s.dueDays ? (s.phone?' • ':'')+'⏱ '+s.dueDays+' days' : ''}</div>
       </div>
       <div class="shop-bal c-amber">
         Rs ${fmt(x.bal)}<small>OUTSTANDING</small>
@@ -2066,11 +2158,12 @@ function buildChartData(range, txs){
   const now = new Date();
   const labels = [], buckets = [];
   const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
   if (range === 'daily') {
     for (let i = 29; i >= 0; i--) {
       const d = new Date(now); d.setDate(d.getDate() - i);
       labels.push(`${d.getDate()} ${MON[d.getMonth()]}`);
-      buckets.push({ date: d.toISOString().slice(0,10), jobs: 0, payments: 0 });
+      buckets.push({ date: localDateStr(d), jobs: 0, payments: 0 });
     }
   } else if (range === 'weekly') {
     for (let i = 11; i >= 0; i--) {
@@ -2079,13 +2172,13 @@ function buildChartData(range, txs){
       const end = new Date(now);
       end.setDate(now.getDate() - (i*7));
       labels.push(`W${12-i}`);
-      buckets.push({ start: start.toISOString().slice(0,10), end: end.toISOString().slice(0,10), jobs: 0, payments: 0 });
+      buckets.push({ start: localDateStr(start), end: localDateStr(end), jobs: 0, payments: 0 });
     }
   } else if (range === 'monthly') {
     for (let i = 11; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       labels.push(MON[d.getMonth()] + ' ' + String(d.getFullYear()).slice(2));
-      buckets.push({ monthKey: d.toISOString().slice(0,7), jobs: 0, payments: 0 });
+      buckets.push({ monthKey: localMonthKey(d), jobs: 0, payments: 0 });
     }
   } else {
     for (let i = 4; i >= 0; i--) {
@@ -2094,6 +2187,7 @@ function buildChartData(range, txs){
       buckets.push({ year: y, jobs: 0, payments: 0 });
     }
   }
+
   txs.forEach(t => {
     const amt = Number(t.amount)||0;
     const dstr = t.date || '';
@@ -2175,14 +2269,37 @@ function renderShopDetail(){
   $('detailAvatar').textContent = (shop.name||'S').charAt(0).toUpperCase();
   $('detailMeta').textContent = [
     shop.phone ? '📞 '+shop.phone : '',
-    shop.address ? '📍 '+shop.address : '',
-    shop.dueDay ? '📅 Day '+shop.dueDay : ''
+    shop.address ? '📍 '+shop.address : ''
   ].filter(Boolean).join(' • ') || '—';
+
   const tot = shopTotals(shop.id);
   $('detailBal').textContent = 'Rs ' + fmt(tot.balance);
   $('detailBal').className = 'stat-value ' + (tot.balance > 0 ? 'c-amber' : (tot.balance < 0 ? 'c-green' : ''));
   $('detailJobTotal').textContent = 'Rs ' + fmt(tot.job);
   $('detailPayTotal').textContent = 'Rs ' + fmt(tot.pay);
+
+  // Due info
+  const dueInfoEl = $('detailDueInfo');
+  const dueDays = Math.max(0, Math.floor(Number(shop.dueDays) || 0));
+  const latestJob = latestJobOf(shop.id);
+  if (!dueDays) {
+    dueInfoEl.innerHTML = '⏱ <b>Due Days = 0</b> — notifications off. Edit shop and set due days to enable reminders.';
+  } else if (!latestJob) {
+    dueInfoEl.innerHTML = `⏱ <b>Due Days: ${dueDays}</b><br>No job yet — reminders start when you add a job.`;
+  } else {
+    const dueDateStr = addDays(latestJob.date, dueDays);
+    const today = todayStr();
+    const diff = daysBetween(today, dueDateStr);
+    let statusLine = '';
+    if (diff > 0) statusLine = `<span style="color:#6ee7b7">⏳ Due in ${diff} day${diff===1?'':'s'}</span>`;
+    else if (diff === 0) statusLine = `<span style="color:#fcd34d">📅 Due today</span>`;
+    else statusLine = `<span style="color:#fca5a5">⚠️ Overdue by ${Math.abs(diff)} day${Math.abs(diff)===1?'':'s'}</span>`;
+    dueInfoEl.innerHTML = `⏱ <b>Due Days: ${dueDays}</b> after each job<br>
+      🔧 Last job: ${formatDate(latestJob.date)}<br>
+      📅 Due date: <b>${formatDate(dueDateStr)}</b><br>
+      ${statusLine}`;
+  }
+
   renderShopTx();
   renderShopChart();
 }
@@ -2298,13 +2415,14 @@ $('sheetBackdrop').addEventListener('click', e => {
 function openShopModal(shop = null){
   $('shopForm').reset();
   $('shopId').value = '';
+  $('sDueDays').value = '';
   $('deleteShopBtn').classList.add('hidden');
   if (shop) {
     $('shopModalTitle').textContent = 'Edit Shop';
     $('shopId').value = shop.id;
     $('sName').value = shop.name || '';
     $('sPhone').value = shop.phone || '';
-    $('sDueDay').value = shop.dueDay || '';
+    $('sDueDays').value = shop.dueDays ?? '';
     $('sAddress').value = shop.address || '';
     $('sNotes').value = shop.notes || '';
     $('deleteShopBtn').classList.remove('hidden');
@@ -2318,7 +2436,7 @@ $('shopForm').addEventListener('submit', async (e) => {
   const data = {
     name: $('sName').value.trim(),
     phone: $('sPhone').value.trim(),
-    dueDay: $('sDueDay').value ? Number($('sDueDay').value) : null,
+    dueDays: Math.max(0, Math.floor(Number($('sDueDays').value) || 0)),
     address: $('sAddress').value.trim(),
     notes: $('sNotes').value.trim(),
     updatedAt: Date.now()
@@ -2388,7 +2506,14 @@ $('jobForm').addEventListener('submit', async (e) => {
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Saving...';
   try {
     await addDoc(collection(db, 'users', state.user.uid, 'transactions'), data);
-    toast('✓ Job added — ' + data.refNo);
+    const shop = getShop(shopId);
+    const dueDays = Math.max(0, Math.floor(Number(shop?.dueDays) || 0));
+    if (dueDays) {
+      const dueDate = addDays(data.date, dueDays);
+      toast(`✓ Job added — Due on ${formatDate(dueDate)}`);
+    } else {
+      toast('✓ Job added — ' + data.refNo);
+    }
     closeModal('modalJob');
   } catch (err) { console.error(err); toast('Error saving'); }
   finally { btn.disabled = false; btn.textContent = 'Save Job'; }
@@ -2439,10 +2564,12 @@ function applyBillRange(range){
   } else if (range === 'year') {
     from = new Date(now.getFullYear(), 0, 1); to = now;
   } else { from = null; to = null; }
-  $('billFrom').value = from ? from.toISOString().slice(0,10) : '';
-  $('billTo').value   = to ? to.toISOString().slice(0,10) : '';
-  state.billFrom = from ? from.toISOString().slice(0,10) : '';
-  state.billTo   = to ? to.toISOString().slice(0,10) : '';
+  const fromStr = from ? localDateStr(from) : '';
+  const toStr = to ? localDateStr(to) : '';
+  $('billFrom').value = fromStr;
+  $('billTo').value   = toStr;
+  state.billFrom = fromStr;
+  state.billTo   = toStr;
   document.querySelectorAll('#viewBills .chip[data-bill-range]').forEach(c =>
     c.classList.toggle('active', c.dataset.billRange === range));
   updateBillPreview();
@@ -2581,6 +2708,24 @@ $('shopSearch2').addEventListener('input', e => {
   shopSearchTimer = setTimeout(() => {
     renderShopList2();
   }, 150);
+});
+
+/* ============ SEARCH CLEAR BUTTONS ============ */
+function wireSearchClear(inputEl, btnEl){
+  if (!inputEl || !btnEl) return;
+  const sync = () => btnEl.classList.toggle('hidden', !inputEl.value);
+  inputEl.addEventListener('input', sync);
+  btnEl.addEventListener('click', () => {
+    inputEl.value = '';
+    inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+    inputEl.focus();
+  });
+  sync();
+}
+document.querySelectorAll('.search-clear').forEach(btn => {
+  const targetId = btn.dataset.clearFor;
+  const input = document.getElementById(targetId);
+  if (input) wireSearchClear(input, btn);
 });
 
 /* ---- Shop sort chips ---- */
@@ -2722,7 +2867,7 @@ $('confirmClearBtn').addEventListener('click', async () => {
     }
     try { await deleteDoc(doc(db, 'users', state.user.uid, 'profile', 'main')); }
     catch(err) { console.warn('Failed profile', err); }
-    try { localStorage.removeItem(getSkippedKey()); } catch(e) {}
+    try { localStorage.removeItem(getSkippedKey()); localStorage.removeItem(getSeenKey()); } catch(e) {}
 
     closeModal('modalClear');
     toast('🗑️ All data cleared successfully');
@@ -2866,7 +3011,7 @@ $('detailTx').addEventListener('click', e => {
   if (el && el.dataset.txId) openTxModal(el.dataset.txId);
 });
 
-console.log('✅ Shop Ledger loaded');
+console.log('✅ Shop Ledger loaded (v3 — Due Days after job)');
 </script>
 </body>
 </html>
