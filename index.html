@@ -3,678 +3,481 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<meta name="theme-color" content="#0b0e14" />
+<meta name="theme-color" content="#0a0e17" />
 <link rel="icon" href="data:," />
 <title>Shop Ledger</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
 <style>
   :root{
-    --bg:#0b0e14; --surface:#141824; --surface-2:#1c2130; --surface-3:#232a3d;
-    --border:#252b3b; --text:#e8ecf5; --muted:#8b93a7;
-    --accent:#6366f1; --accent-2:#8b5cf6;
-    --green:#10b981; --amber:#f59e0b; --red:#ef4444; --blue:#3b82f6;
-    --radius:16px; --shadow:0 10px 30px rgba(0,0,0,.5);
+    --bg-base:#0a0e17;
+    --bg-grad-1:rgba(59,130,246,.14);
+    --bg-grad-2:rgba(139,92,246,.1);
+    --bg-grad-3:rgba(34,197,94,.06);
+    --glass-bg:rgba(22,27,34,.5);
+    --glass-bg-2:rgba(30,36,46,.65);
+    --glass-bg-3:rgba(40,48,60,.85);
+    --glass-blur:blur(38px) saturate(180%);
+    --glass-border:rgba(255,255,255,.1);
+    --glass-border-strong:rgba(255,255,255,.16);
+    --glass-highlight:rgba(255,255,255,.08);
+    --glass-shadow:0 8px 32px rgba(0,0,0,.4);
+    --text:#f0f6fc;
+    --muted:#8b949e;
+    --muted-2:#6e7681;
+    --accent:#3b82f6;
+    --accent-2:#2563eb;
+    --green:#22c55e;
+    --amber:#eab308;
+    --red:#ef4444;
+    --radius-lg:20px;
+    --radius-md:14px;
+    --radius-sm:10px;
     --safe-top:env(safe-area-inset-top,0);
     --safe-bottom:env(safe-area-inset-bottom,0);
+  }
+  body.light{
+    --bg-base:#eef2f8;
+    --bg-grad-1:rgba(59,130,246,.18);
+    --bg-grad-2:rgba(139,92,246,.14);
+    --bg-grad-3:rgba(34,197,94,.1);
+    --glass-bg:rgba(255,255,255,.52);
+    --glass-bg-2:rgba(255,255,255,.68);
+    --glass-bg-3:rgba(255,255,255,.88);
+    --glass-border:rgba(0,0,0,.08);
+    --glass-border-strong:rgba(0,0,0,.12);
+    --glass-highlight:rgba(255,255,255,.9);
+    --glass-shadow:0 8px 32px rgba(0,0,0,.1);
+    --text:#0d1117;
+    --muted:#57606a;
+    --muted-2:#8c959f;
+    --accent:#2563eb;
+    --accent-2:#1d4ed8;
+    --green:#16a34a;
+    --amber:#ca8a04;
+    --red:#dc2626;
   }
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   html,body{height:100%}
   body{
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    background:var(--bg); color:var(--text); min-height:100dvh;
-    overflow-x:hidden; font-size:14px;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
+    background:var(--bg-base);
     background-image:
-      radial-gradient(700px 400px at 10% -10%, rgba(99,102,241,.16), transparent 60%),
-      radial-gradient(600px 400px at 100% 0%, rgba(139,92,246,.12), transparent 55%);
+      radial-gradient(ellipse 800px 500px at 10% -10%, var(--bg-grad-1), transparent 60%),
+      radial-gradient(ellipse 700px 500px at 100% 10%, var(--bg-grad-2), transparent 60%),
+      radial-gradient(ellipse 600px 400px at 50% 100%, var(--bg-grad-3), transparent 60%);
     background-attachment:fixed;
+    color:var(--text); min-height:100dvh;
+    overflow-x:hidden; font-size:14px; line-height:1.4;
+    transition:background-color .3s ease, color .3s ease;
   }
   .hidden{display:none !important}
   button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
   button{cursor:pointer;border:none;background:none;position:relative;z-index:1}
   a{color:var(--accent);text-decoration:none}
   img{max-width:100%;display:block}
+  h1,h2,h3,h4{font-weight:600;letter-spacing:-.01em}
 
-  /* ============ AUTH / PENDING / REJECTED ============ */
-  .auth-wrap{min-height:100dvh;display:grid;place-items:center;padding:20px}
-  .auth-card{
-    width:100%;max-width:400px;
-    background:linear-gradient(180deg, rgba(28,33,48,.92), rgba(20,24,36,.96));
-    border:1px solid var(--border); border-radius:24px; padding:28px 22px;
-    box-shadow:var(--shadow); backdrop-filter:blur(12px);
-    animation:pop .4s ease;
+  .glass,.auth-card,.status-card,.section,.stat-card,.modal,.sheet,.topbar,.bottom-nav,.sidebar,.notif-item,.notif-banner{
+    background:var(--glass-bg);
+    -webkit-backdrop-filter:var(--glass-blur);
+    backdrop-filter:var(--glass-blur);
+    border:1px solid var(--glass-border);
+    box-shadow:var(--glass-shadow),inset 0 1px 0 var(--glass-highlight);
   }
-  @keyframes pop{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
-  .brand{text-align:center;margin-bottom:22px}
-  .brand .logo{
-    width:60px;height:60px;margin:0 auto 12px;border-radius:18px;
-    display:grid;place-items:center;font-size:28px;
-    background:linear-gradient(135deg,var(--accent),var(--accent-2));
-    box-shadow:0 8px 24px rgba(99,102,241,.45);
-  }
-  .brand h1{font-size:20px;font-weight:700;letter-spacing:-.3px}
+
+  .auth-wrap,.status-screen{min-height:100dvh;display:grid;place-items:center;padding:20px}
+  .auth-card,.status-card{width:100%;max-width:400px;border-radius:24px;padding:28px 24px;animation:pop .35s cubic-bezier(.2,.9,.3,1)}
+  @keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .brand{text-align:center;margin-bottom:24px}
+  .brand .logo{width:52px;height:52px;margin:0 auto 14px;border-radius:14px;display:grid;place-items:center;font-size:24px;background:var(--accent);box-shadow:0 8px 24px rgba(59,130,246,.4)}
+  .brand h1{font-size:20px;font-weight:700}
   .brand p{color:var(--muted);font-size:12.5px;margin-top:4px}
-  .tabs{display:flex;background:var(--surface-2);border-radius:12px;padding:4px;margin-bottom:18px}
-  .tab{
-    flex:1;padding:11px 8px;border-radius:9px;font-size:13.5px;font-weight:600;
-    color:var(--muted);transition:.2s;user-select:none;
-  }
-  .tab.active{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;box-shadow:0 4px 14px rgba(99,102,241,.4)}
-  .field{margin-bottom:12px}
-  .field label{display:block;font-size:11.5px;font-weight:600;color:var(--muted);margin-bottom:6px;letter-spacing:.3px;text-transform:uppercase}
-  .field input,.field select,.field textarea{
-    width:100%;padding:12px 13px;border-radius:11px;
-    background:var(--surface-2);border:1px solid var(--border);
-    outline:none;transition:.2s;font-size:15px;
-  }
-  .field input:focus,.field select:focus,.field textarea:focus{
-    border-color:var(--accent);box-shadow:0 0 0 3px rgba(99,102,241,.15);
-  }
-  .field textarea{resize:vertical;min-height:52px}
+  .tabs{display:flex;background:var(--glass-bg-2);border-radius:12px;padding:4px;margin-bottom:20px;border:1px solid var(--glass-border)}
+  .tab{flex:1;padding:10px;border-radius:8px;font-size:13px;font-weight:600;color:var(--muted);transition:.15s}
+  .tab.active{background:var(--accent);color:#fff}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px}
+  .field input,.field select,.field textarea{width:100%;padding:11px 12px;border-radius:10px;background:var(--glass-bg-2);border:1px solid var(--glass-border);outline:none;transition:.15s;font-size:14px}
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,.2)}
+  .field textarea{resize:vertical;min-height:60px}
   .field-hint{font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.6}
-  .btn-primary{
-    width:100%;padding:13px;border-radius:11px;font-weight:700;font-size:14.5px;color:#fff;
-    background:linear-gradient(135deg,var(--accent),var(--accent-2));
-    box-shadow:0 8px 22px rgba(99,102,241,.35); transition:.2s;
-  }
-  .btn-primary:active{transform:scale(.98)}
+  .btn-primary{width:100%;padding:12px;border-radius:10px;font-weight:600;font-size:14px;color:#fff;background:var(--accent);transition:.15s;box-shadow:0 4px 14px rgba(59,130,246,.35)}
+  .btn-primary:active{background:var(--accent-2)}
   .btn-primary:disabled{opacity:.6;cursor:not-allowed}
-  .btn-ghost{padding:12px 16px;border-radius:11px;font-weight:600;font-size:13.5px;
-    background:var(--surface-2);border:1px solid var(--border);color:var(--text);}
-  .btn-danger{padding:12px 16px;border-radius:11px;font-weight:600;font-size:13.5px;
-    background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.35);color:#fca5a5;}
-  .btn-green{padding:12px 16px;border-radius:11px;font-weight:600;font-size:13.5px;
-    background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.4);color:#6ee7b7;}
-  .msg{text-align:center;font-size:12.5px;margin-top:12px;min-height:18px;line-height:1.5}
+  .btn-ghost{padding:11px 16px;border-radius:10px;font-weight:600;font-size:13px;background:var(--glass-bg-2);border:1px solid var(--glass-border);color:var(--text)}
+  .btn-ghost:hover{background:var(--glass-bg-3)}
+  .btn-danger{padding:11px 16px;border-radius:10px;font-weight:600;font-size:13px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.35);color:#fca5a5}
+  .btn-green{padding:11px 16px;border-radius:10px;font-weight:600;font-size:13px;background:rgba(34,197,94,.14);border:1px solid rgba(34,197,94,.4);color:#86efac}
+  body.light .btn-green{color:#15803d}
+  .msg{text-align:center;font-size:12.5px;margin-top:12px;min-height:18px}
   .msg.err{color:#fca5a5}
-  .msg.ok{color:#6ee7b7}
+  body.light .msg.err{color:#dc2626}
+  .msg.ok{color:#86efac}
+  body.light .msg.ok{color:#15803d}
 
-  /* Pending / Rejected screens */
-  .status-screen{min-height:100dvh;display:grid;place-items:center;padding:24px}
-  .status-card{
-    width:100%;max-width:420px;
-    background:linear-gradient(180deg, rgba(28,33,48,.92), rgba(20,24,36,.96));
-    border:1px solid var(--border);border-radius:24px;
-    padding:32px 24px;text-align:center;
-    box-shadow:var(--shadow);backdrop-filter:blur(12px);
-    animation:pop .4s ease;
-  }
-  .status-icon{
-    width:96px;height:96px;margin:0 auto 22px;
-    border-radius:28px;display:grid;place-items:center;font-size:48px;position:relative;
-  }
-  .status-icon.pending{
-    background:linear-gradient(135deg, rgba(245,158,11,.2), rgba(245,158,11,.05));
-    border:1px solid rgba(245,158,11,.4);
-    animation:pendingPulse 2s infinite;
-  }
-  @keyframes pendingPulse{
-    0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(245,158,11,.4)}
-    50%{transform:scale(1.04);box-shadow:0 0 0 16px rgba(245,158,11,0)}
-  }
-  .status-icon.rejected{
-    background:linear-gradient(135deg, rgba(239,68,68,.2), rgba(239,68,68,.05));
-    border:1px solid rgba(239,68,68,.4);
-  }
-  .status-icon .ring{
-    position:absolute;inset:-6px;border-radius:32px;
-    border:2px solid transparent;
-    border-top-color:rgba(245,158,11,.7);
-    border-right-color:rgba(245,158,11,.7);
-    animation:spin 2s linear infinite;
-  }
+  .status-icon{width:80px;height:80px;margin:0 auto 20px;border-radius:22px;display:grid;place-items:center;font-size:36px;position:relative}
+  .status-icon.pending{background:rgba(234,179,8,.14);border:1px solid rgba(234,179,8,.35)}
+  .status-icon.rejected{background:rgba(239,68,68,.14);border:1px solid rgba(239,68,68,.35)}
+  .status-icon .ring{position:absolute;inset:-4px;border-radius:26px;border:2px solid transparent;border-top-color:rgba(234,179,8,.7);border-right-color:rgba(234,179,8,.7);animation:spin 2s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
-  .status-title{font-size:20px;font-weight:800;letter-spacing:-.3px;margin-bottom:10px}
-  .status-desc{font-size:13.5px;color:var(--muted);line-height:1.7;margin-bottom:20px}
-  .status-info{
-    background:var(--surface-2);border:1px solid var(--border);border-radius:12px;
-    padding:12px 14px;font-size:12.5px;margin-bottom:20px;text-align:left;
-  }
+  .status-title{font-size:18px;font-weight:700;margin-bottom:8px;text-align:center}
+  .status-desc{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:20px;text-align:center}
+  .status-info{background:var(--glass-bg-2);border:1px solid var(--glass-border);border-radius:12px;padding:12px 14px;font-size:12.5px;margin-bottom:16px}
   .status-info-row{display:flex;justify-content:space-between;gap:10px;padding:5px 0}
   .status-info-row .lbl{color:var(--muted);font-weight:600}
   .status-info-row .val{font-weight:600;font-family:ui-monospace,monospace;font-size:11.5px;word-break:break-all;text-align:right}
-  .status-hint{
-    font-size:12px;color:var(--muted);line-height:1.6;padding:10px;
-    background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.25);
-    border-radius:10px;margin-bottom:18px;
-  }
+  .status-hint{font-size:12px;color:var(--muted);line-height:1.6;padding:10px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.28);border-radius:10px;margin-bottom:16px}
   .status-actions{display:flex;flex-direction:column;gap:8px}
-  .checking-dots{display:inline-flex;gap:3px;margin-left:6px}
-  .checking-dots span{
-    width:4px;height:4px;border-radius:50%;background:var(--muted);
-    animation:dotBounce 1.4s infinite ease-in-out both;
-  }
+  .checking-dots{display:inline-flex;gap:3px;margin-left:6px;vertical-align:middle}
+  .checking-dots span{width:4px;height:4px;border-radius:50%;background:var(--muted);animation:dotBounce 1.4s infinite ease-in-out both}
   .checking-dots span:nth-child(1){animation-delay:-.32s}
   .checking-dots span:nth-child(2){animation-delay:-.16s}
   @keyframes dotBounce{0%,80%,100%{opacity:.3;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
 
-  /* ============ APP SHELL ============ */
-  .app-shell{
-    max-width:480px;margin:0 auto;min-height:100dvh;position:relative;
-    padding-bottom:calc(70px + var(--safe-bottom));
-  }
-  .topbar{
-    position:sticky;top:0;z-index:40;
-    display:flex;align-items:center;justify-content:space-between;
-    padding:12px 16px; padding-top:calc(12px + var(--safe-top));
-    background:rgba(11,14,20,.9); backdrop-filter:blur(16px);
-    border-bottom:1px solid rgba(37,43,59,.7);
-  }
-  .brand-mini{display:flex;align-items:center;gap:9px;font-weight:700;font-size:15px;letter-spacing:-.2px;min-width:0}
-  .brand-mini .ico{
-    width:32px;height:32px;border-radius:10px;display:grid;place-items:center;font-size:15px;
-    background:linear-gradient(135deg,var(--accent),var(--accent-2));overflow:hidden;flex-shrink:0;
-  }
+  .app-shell{max-width:520px;margin:0 auto;min-height:100dvh;position:relative;padding-bottom:calc(64px + var(--safe-bottom))}
+  .topbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:space-between;padding:10px 16px;padding-top:calc(10px + var(--safe-top));border-radius:0 0 20px 20px;border-top:none;border-left:none;border-right:none;border-bottom:1px solid var(--glass-border);box-shadow:0 4px 24px rgba(0,0,0,.25),inset 0 1px 0 var(--glass-highlight)}
+  body.light .topbar{box-shadow:0 4px 24px rgba(0,0,0,.06),inset 0 1px 0 var(--glass-highlight)}
+  .brand-mini{display:flex;align-items:center;gap:10px;font-weight:600;font-size:14.5px;min-width:0}
+  .brand-mini .ico{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-size:14px;background:var(--accent);overflow:hidden;flex-shrink:0}
   .brand-mini .ico img{width:100%;height:100%;object-fit:cover}
   .brand-mini .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .topbar-actions{display:flex;gap:8px;align-items:center;position:relative;flex-shrink:0}
-  .icon-btn{
-    width:36px;height:36px;border-radius:10px;display:grid;place-items:center;
-    background:var(--surface-2);border:1px solid var(--border);font-size:15px;color:var(--muted);transition:.2s;
-  }
-  .icon-btn:hover{color:var(--text);border-color:var(--accent)}
-  .notif-badge{
-    position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;
-    font-size:10px;font-weight:700;padding:2px 5px;border-radius:20px;min-width:16px;text-align:center;
-    border:2px solid var(--bg);animation:pulse 1.8s infinite;
-  }
-  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+  .topbar-actions{display:flex;gap:6px;align-items:center;position:relative;flex-shrink:0}
+  .icon-btn{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--glass-bg-2);border:1px solid var(--glass-border);font-size:14px;color:var(--muted);transition:.15s;-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
+  .icon-btn:hover{color:var(--text);background:var(--glass-bg-3);border-color:var(--glass-border-strong)}
+  .notif-badge{position:absolute;top:-3px;right:-3px;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:2px 5px;border-radius:10px;min-width:16px;text-align:center;border:2px solid var(--bg-base)}
 
   .container{padding:14px 14px 0}
-  .view{display:none;animation:fade .25s ease}
+  .view{display:none;animation:fade .2s ease}
   .view.active{display:block}
-  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
 
-  .stats{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px}
-  .stat-card{
-    background:linear-gradient(160deg,var(--surface-2),var(--surface));
-    border:1px solid var(--border);border-radius:14px;
-    padding:13px 13px;position:relative;overflow:hidden;
-  }
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+  .stat-card{border-radius:var(--radius-lg);padding:14px;position:relative}
   .stat-card.full{grid-column:1/-1}
-  .stat-card.accent{
-    background:linear-gradient(135deg, rgba(99,102,241,.22), rgba(139,92,246,.12));
-    border-color:rgba(99,102,241,.35);
-  }
-  .stat-card.green{
-    background:linear-gradient(135deg, rgba(16,185,129,.18), rgba(16,185,129,.04));
-    border-color:rgba(16,185,129,.3);
-  }
-  .stat-label{font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.4px;display:block;margin-bottom:6px;text-transform:uppercase}
-  .stat-value{font-size:18px;font-weight:800;letter-spacing:-.4px;display:block;line-height:1.2}
-  .stat-card.accent .stat-value{font-size:24px}
+  .stat-card.accent{background:linear-gradient(135deg,rgba(59,130,246,.22),rgba(37,99,235,.06)),var(--glass-bg);border-color:rgba(59,130,246,.3)}
+  .stat-card.green{background:linear-gradient(135deg,rgba(34,197,94,.16),rgba(34,197,94,.02)),var(--glass-bg);border-color:rgba(34,197,94,.28)}
+  body.light .stat-card.accent{background:linear-gradient(135deg,rgba(59,130,246,.14),rgba(37,99,235,.04)),var(--glass-bg)}
+  body.light .stat-card.green{background:linear-gradient(135deg,rgba(34,197,94,.1),rgba(34,197,94,.02)),var(--glass-bg)}
+  .stat-label{font-size:11px;color:var(--muted);font-weight:600;display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.3px}
+  .stat-value{font-size:18px;font-weight:700;display:block;line-height:1.2}
+  .stat-card.accent .stat-value{font-size:22px}
   .stat-sub{font-size:11px;color:var(--muted);display:block;margin-top:4px}
-  .c-green{color:#34d399} .c-amber{color:#fbbf24} .c-red{color:#fca5a5} .c-purple{color:#c4b5fd}
+  .c-green{color:#4ade80}.c-amber{color:#facc15}.c-red{color:#f87171}.c-blue{color:#60a5fa}
+  body.light .c-green{color:#15803d}body.light .c-amber{color:#a16207}body.light .c-red{color:#dc2626}body.light .c-blue{color:#2563eb}
 
-  .section{
-    background:var(--surface);border:1px solid var(--border);border-radius:14px;
-    padding:13px 13px;margin-bottom:14px;
-  }
+  .section{border-radius:var(--radius-lg);padding:14px;margin-bottom:14px}
   .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px}
-  .section-title{font-size:14px;font-weight:700;letter-spacing:-.2px}
+  .section-title{font-size:13.5px;font-weight:600;color:var(--text)}
   .section-sub{font-size:11px;color:var(--muted);font-weight:600}
-  .range-chips{display:flex;gap:3px;background:var(--surface-2);padding:3px;border-radius:9px}
-  .rc{padding:5px 9px;border-radius:6px;font-size:10.5px;font-weight:600;color:var(--muted);transition:.2s}
-  .rc.active{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff}
+  .range-chips{display:flex;gap:2px;background:var(--glass-bg-2);padding:3px;border-radius:8px;border:1px solid var(--glass-border)}
+  .rc{padding:5px 10px;border-radius:5px;font-size:11px;font-weight:600;color:var(--muted);transition:.15s}
+  .rc.active{background:var(--accent);color:#fff}
   .chart-wrap{height:200px;position:relative}
 
-  /* ============ SEARCH WITH CLEAR ============ */
   .search{position:relative;margin-bottom:12px}
-  .search input{
-    width:100%;padding:11px 40px 11px 38px;border-radius:11px;
-    background:var(--surface);border:1px solid var(--border);outline:none;font-size:13.5px;transition:.2s;
-  }
-  .search input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(99,102,241,.12)}
-  .search::before{content:"🔍";position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:12px;opacity:.6;pointer-events:none}
-  .search-clear{
-    position:absolute;right:8px;top:50%;transform:translateY(-50%);
-    width:24px;height:24px;border-radius:50%;
-    display:grid;place-items:center;font-size:11px;line-height:1;
-    background:var(--surface-3);color:var(--muted);
-    border:1px solid var(--border);transition:.2s;z-index:2;
-  }
-  .search-clear:hover{color:var(--text);background:var(--surface-2);border-color:var(--accent)}
-  .search-clear.hidden{display:none}
+  .search input{width:100%;padding:10px 36px 10px 12px;border-radius:10px;background:var(--glass-bg);border:1px solid var(--glass-border);outline:none;font-size:13px;transition:.15s;-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
+  .search input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,.18)}
+  .search-clear{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:11px;background:var(--glass-bg-3);color:var(--muted);border:1px solid var(--glass-border);transition:.15s}
+  .search-clear:hover{color:var(--text)}
 
   .filters{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;margin-bottom:12px;scrollbar-width:none}
   .filters::-webkit-scrollbar{display:none}
-  .chip{
-    padding:7px 13px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;
-    background:var(--surface);border:1px solid var(--border);color:var(--muted);transition:.2s;
-  }
-  .chip.active{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;border-color:transparent}
+  .chip{padding:7px 12px;border-radius:16px;font-size:12px;font-weight:600;white-space:nowrap;background:var(--glass-bg-2);border:1px solid var(--glass-border);color:var(--muted);transition:.15s}
+  .chip.active{background:var(--accent);color:#fff;border-color:var(--accent)}
 
   .shop-list{display:flex;flex-direction:column;gap:8px}
-  .shop-item{
-    display:flex;align-items:center;gap:11px;padding:11px 12px;
-    background:var(--surface-2);border:1px solid var(--border);border-radius:12px;
-    transition:.2s;cursor:pointer;
-  }
-  .shop-item:active{transform:scale(.99)}
-  .shop-avatar{
-    width:40px;height:40px;border-radius:11px;flex-shrink:0;
-    display:grid;place-items:center;font-weight:800;font-size:16px;
-    background:linear-gradient(135deg,rgba(99,102,241,.3),rgba(139,92,246,.2));
-    border:1px solid rgba(99,102,241,.3);color:#c7d2fe;
-  }
+  .shop-item{display:flex;align-items:center;gap:11px;padding:11px 12px;background:var(--glass-bg-2);border:1px solid var(--glass-border);border-radius:var(--radius-md);transition:.15s;cursor:pointer}
+  .shop-item:hover{background:var(--glass-bg-3);border-color:var(--glass-border-strong)}
+  .shop-avatar{width:36px;height:36px;border-radius:9px;flex-shrink:0;display:grid;place-items:center;font-weight:700;font-size:14px;background:rgba(59,130,246,.16);border:1px solid rgba(59,130,246,.28);color:#93c5fd}
+  body.light .shop-avatar{color:#1d4ed8}
   .shop-info{flex:1;min-width:0}
-  .shop-name{font-weight:700;font-size:13.5px;letter-spacing:-.1px;word-break:break-word}
-  .shop-meta{font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .shop-bal{font-weight:800;font-size:13.5px;white-space:nowrap;text-align:right}
+  .shop-name{font-weight:600;font-size:13.5px;word-break:break-word}
+  .shop-meta{font-size:11.5px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .shop-bal{font-weight:700;font-size:13.5px;white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}
   .shop-bal small{display:block;font-size:9.5px;color:var(--muted);font-weight:600;margin-top:2px;letter-spacing:.3px}
-
-  .shop-rank{
-    width:22px;height:22px;border-radius:50%;flex-shrink:0;
-    display:grid;place-items:center;font-size:10.5px;font-weight:800;
-    background:linear-gradient(135deg,var(--accent),var(--accent-2));
-    color:#fff;box-shadow:0 2px 8px rgba(99,102,241,.4);
-  }
+  .shop-rank{width:22px;height:22px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;font-size:11px;font-weight:700;background:var(--glass-bg-3);color:var(--muted)}
 
   .tx-list{display:flex;flex-direction:column;gap:7px}
-  .tx{
-    display:flex;gap:10px;padding:10px 11px;align-items:flex-start;
-    background:var(--surface-2);border:1px solid var(--border);border-radius:11px;transition:.2s;
-  }
-  .tx:active{transform:scale(.99)}
-  .tx-icon{
-    width:34px;height:34px;border-radius:10px;flex-shrink:0;
-    display:grid;place-items:center;font-size:14px;font-weight:700;
-  }
-  .tx-icon.job{background:rgba(245,158,11,.15);color:#fcd34d;border:1px solid rgba(245,158,11,.3)}
-  .tx-icon.payment{background:rgba(16,185,129,.15);color:#6ee7b7;border:1px solid rgba(16,185,129,.3)}
+  .tx{display:flex;gap:10px;padding:10px 11px;align-items:flex-start;background:var(--glass-bg-2);border:1px solid var(--glass-border);border-radius:var(--radius-sm);transition:.15s;cursor:pointer}
+  .tx:hover{background:var(--glass-bg-3)}
+  .tx-icon{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:12px;font-weight:700}
+  .tx-icon.job{background:rgba(234,179,8,.14);color:#facc15;border:1px solid rgba(234,179,8,.28)}
+  .tx-icon.payment{background:rgba(34,197,94,.14);color:#4ade80;border:1px solid rgba(34,197,94,.28)}
+  body.light .tx-icon.job{color:#a16207}
+  body.light .tx-icon.payment{color:#15803d}
   .tx-main{flex:1;min-width:0}
-  .tx-title{font-weight:700;font-size:12.5px;word-break:break-word;letter-spacing:-.1px}
-  .tx-ref{font-size:10px;color:var(--muted);font-family:ui-monospace,monospace;margin-top:2px;letter-spacing:.2px}
+  .tx-title{font-weight:600;font-size:12.5px;word-break:break-word}
+  .tx-ref{font-size:10px;color:var(--muted);font-family:ui-monospace,monospace;margin-top:2px}
   .tx-meta{font-size:10.5px;color:var(--muted);margin-top:3px}
-  .tx-notes{font-size:11.5px;color:#a8b0c4;margin-top:4px;word-break:break-word;line-height:1.4}
-  .tx-amount{font-weight:800;font-size:13px;white-space:nowrap;text-align:right}
-  .tx-amount.job{color:#fbbf24}
-  .tx-amount.payment{color:#34d399}
+  .tx-notes{font-size:11.5px;color:var(--muted);margin-top:4px;word-break:break-word}
+  .tx-amount{font-weight:700;font-size:13px;white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}
+  .tx-amount.job{color:#facc15}
+  .tx-amount.payment{color:#4ade80}
+  body.light .tx-amount.job{color:#a16207}
+  body.light .tx-amount.payment{color:#15803d}
 
-  .more-btn{
-    width:100%;padding:11px;border-radius:11px;margin-top:10px;
-    background:var(--surface-2);border:1px dashed var(--border);
-    color:var(--muted);font-weight:700;font-size:12.5px;
-    display:flex;align-items:center;justify-content:center;gap:6px;transition:.2s;
-  }
-  .more-btn:hover{color:var(--text);border-color:var(--accent);background:rgba(99,102,241,.06)}
+  .more-btn{width:100%;padding:10px;border-radius:10px;margin-top:10px;background:var(--glass-bg-2);border:1px dashed var(--glass-border);color:var(--muted);font-weight:600;font-size:12.5px;transition:.15s}
+  .more-btn:hover{color:var(--text);border-color:var(--accent);background:rgba(59,130,246,.08)}
 
-  .empty{text-align:center;padding:40px 16px;color:var(--muted)}
-  .empty .ico{font-size:38px;opacity:.35;margin-bottom:10px}
-  .empty p{font-size:13px;line-height:1.7}
-  .empty.small{padding:22px 10px}
-  .empty.small .ico{font-size:28px;margin-bottom:6px}
+  .empty{text-align:center;padding:36px 16px;color:var(--muted)}
+  .empty .ico{font-size:32px;opacity:.35;margin-bottom:10px}
+  .empty p{font-size:13px;line-height:1.6}
+  .empty.small{padding:20px 10px}
+  .empty.small .ico{font-size:24px}
   .empty.small p{font-size:12px}
 
-  .bottom-nav{
-    position:fixed;left:0;right:0;bottom:0;z-index:38;
-    max-width:480px;margin:0 auto;
-    background:rgba(15,18,27,.95);backdrop-filter:blur(20px);
-    border-top:1px solid var(--border);
-    padding:8px 8px calc(8px + var(--safe-bottom));
-    display:grid;grid-template-columns:repeat(4,1fr);gap:4px;
-  }
-  .bn-item{
-    display:flex;flex-direction:column;align-items:center;gap:3px;
-    padding:7px 4px;border-radius:10px;color:var(--muted);
-    font-size:10px;font-weight:600;transition:.2s;letter-spacing:.2px;
-  }
-  .bn-item .ic{font-size:18px;line-height:1}
-  .bn-item.active{color:var(--text);background:var(--surface-2)}
+  .bottom-nav{position:fixed;left:0;right:0;bottom:0;z-index:38;max-width:520px;margin:0 auto;border-radius:20px 20px 0 0;border-bottom:none;border-left:none;border-right:none;border-top:1px solid var(--glass-border);padding:6px 6px calc(6px + var(--safe-bottom));display:grid;grid-template-columns:repeat(4,1fr);gap:2px;box-shadow:0 -8px 32px rgba(0,0,0,.3),inset 0 1px 0 var(--glass-highlight)}
+  body.light .bottom-nav{box-shadow:0 -8px 32px rgba(0,0,0,.06),inset 0 1px 0 var(--glass-highlight)}
+  .bn-item{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;border-radius:10px;color:var(--muted);font-size:10.5px;font-weight:600;transition:.15s}
+  .bn-item .ic{font-size:16px;line-height:1;opacity:.8}
+  .bn-item.active{color:var(--text);background:var(--glass-bg-2)}
+  .bn-item.active .ic{opacity:1}
 
-  .sidebar{
-    display:none;position:fixed;left:0;top:0;bottom:0;width:240px;z-index:50;
-    background:linear-gradient(180deg,var(--surface),var(--bg));
-    border-right:1px solid var(--border);padding:20px 14px;
-    flex-direction:column;gap:8px;
-  }
-  .sb-brand{
-    display:flex;align-items:center;gap:10px;padding:8px 8px 18px;
-    border-bottom:1px solid var(--border);margin-bottom:14px;
-  }
-  .sb-brand .ico{
-    width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:20px;
-    background:linear-gradient(135deg,var(--accent),var(--accent-2));
-    box-shadow:0 6px 18px rgba(99,102,241,.4);overflow:hidden;flex-shrink:0;
-  }
+  .sidebar{display:none;position:fixed;left:0;top:0;bottom:0;width:240px;z-index:50;border-radius:0 24px 24px 0;padding:20px 14px;flex-direction:column;gap:8px;border-top:none;border-bottom:none;border-left:none}
+  .sb-brand{display:flex;align-items:center;gap:10px;padding:8px 8px 18px;border-bottom:1px solid var(--glass-border);margin-bottom:14px}
+  .sb-brand .ico{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;font-size:18px;background:var(--accent);overflow:hidden;flex-shrink:0}
   .sb-brand .ico img{width:100%;height:100%;object-fit:cover}
-  .sb-brand .nm{font-weight:800;font-size:14.5px;letter-spacing:-.2px;line-height:1.2;word-break:break-word}
-  .sb-brand .sub{font-size:10.5px;color:var(--muted);font-weight:600;margin-top:2px}
-  .sb-nav{display:flex;flex-direction:column;gap:4px;flex:1}
-  .sb-item{
-    display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:11px;
-    color:var(--muted);font-weight:600;font-size:13.5px;transition:.2s;text-align:left;
-  }
-  .sb-item .ic{font-size:17px}
-  .sb-item:hover{background:var(--surface-2);color:var(--text)}
-  .sb-item.active{
-    background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;
-    box-shadow:0 6px 16px rgba(99,102,241,.35);
-  }
-  .sb-foot{font-size:10.5px;color:var(--muted);text-align:center;padding:12px 6px 4px;letter-spacing:1.2px;font-weight:700;text-transform:uppercase}
-  .sb-foot span{background:linear-gradient(135deg,var(--accent),var(--accent-2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .sb-brand .nm{font-weight:700;font-size:14px;line-height:1.2;word-break:break-word}
+  .sb-brand .sub{font-size:10.5px;color:var(--muted);margin-top:2px}
+  .sb-nav{display:flex;flex-direction:column;gap:2px;flex:1}
+  .sb-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:var(--muted);font-weight:600;font-size:13px;transition:.15s;text-align:left}
+  .sb-item:hover{background:var(--glass-bg-2);color:var(--text)}
+  .sb-item.active{background:var(--accent);color:#fff}
+  .sb-item .ic{font-size:15px}
+  .sb-foot{font-size:10px;color:var(--muted);text-align:center;padding:12px 6px 4px;letter-spacing:.8px;font-weight:600;text-transform:uppercase}
 
-  .fab{
-    position:fixed;right:16px;bottom:calc(78px + var(--safe-bottom));
-    width:56px;height:56px;border-radius:18px;z-index:44;
-    display:grid;place-items:center;font-size:26px;font-weight:300;color:#fff;
-    background:linear-gradient(135deg,var(--accent),var(--accent-2));
-    box-shadow:0 12px 30px rgba(99,102,241,.55);transition:.2s;
-  }
-  .fab:active{transform:scale(.9)}
+  .fab{position:fixed;right:16px;bottom:calc(74px + var(--safe-bottom));width:52px;height:52px;border-radius:16px;z-index:44;display:grid;place-items:center;font-size:24px;font-weight:300;color:#fff;background:var(--accent);box-shadow:0 8px 24px rgba(59,130,246,.5),inset 0 1px 0 rgba(255,255,255,.2);transition:.15s}
+  .fab:active{transform:scale(.92);background:var(--accent-2)}
 
-  .sheet-backdrop{
-    position:fixed;inset:0;z-index:70;background:rgba(5,7,11,.6);
-    backdrop-filter:blur(4px);animation:fadeIn .18s ease;
-    display:flex;align-items:flex-end;justify-content:center;
-  }
+  .sheet-backdrop{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.35);backdrop-filter:blur(6px);animation:fadeIn .15s ease;display:flex;align-items:flex-end;justify-content:center}
+  body.light .sheet-backdrop{background:rgba(0,0,0,.15)}
   @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-  .sheet{
-    width:100%;max-width:480px;
-    background:linear-gradient(180deg,var(--surface-2),var(--surface));
-    border:1px solid var(--border);border-bottom:none;
-    border-radius:24px 24px 0 0;
-    padding:14px 14px calc(14px + var(--safe-bottom));
-    animation:slideUp .28s cubic-bezier(.2,.9,.3,1);
-  }
+  .sheet{width:100%;max-width:520px;border-radius:24px 24px 0 0;border-bottom:none;padding:14px 14px calc(14px + var(--safe-bottom));animation:slideUp .25s cubic-bezier(.2,.9,.3,1)}
   @keyframes slideUp{from{transform:translateY(100%)}to{transform:none}}
-  .sheet-handle{width:40px;height:4px;background:var(--border);border-radius:4px;margin:0 auto 14px}
-  .sheet-title{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px;padding:0 4px}
-  .sheet-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-  .sheet-btn{
-    display:flex;flex-direction:column;align-items:center;gap:7px;
-    padding:12px 4px;border-radius:14px;background:var(--surface-2);
-    border:1px solid var(--border);transition:.2s;
-  }
-  .sheet-btn:active{transform:scale(.95);border-color:var(--accent)}
-  .sheet-btn .sic{
-    width:44px;height:44px;border-radius:14px;display:grid;place-items:center;font-size:20px;
-    background:linear-gradient(135deg,rgba(99,102,241,.25),rgba(139,92,246,.15));
-    border:1px solid rgba(99,102,241,.3);
-  }
-  .sheet-btn .slb{font-size:11px;font-weight:600;color:var(--text);letter-spacing:.1px;text-align:center}
-  .sheet-btn.shop .sic{background:linear-gradient(135deg,rgba(16,185,129,.3),rgba(16,185,129,.15));border-color:rgba(16,185,129,.4)}
-  .sheet-btn.job .sic{background:linear-gradient(135deg,rgba(245,158,11,.3),rgba(245,158,11,.15));border-color:rgba(245,158,11,.4)}
-  .sheet-btn.pay .sic{background:linear-gradient(135deg,rgba(16,185,129,.3),rgba(16,185,129,.15));border-color:rgba(16,185,129,.4)}
-  .sheet-btn.bill .sic{background:linear-gradient(135deg,rgba(59,130,246,.3),rgba(59,130,246,.15));border-color:rgba(59,130,246,.4)}
-  .sheet-cancel{
-    width:100%;padding:13px;border-radius:12px;margin-top:10px;
-    background:var(--surface-2);border:1px solid var(--border);color:var(--muted);
-    font-weight:700;font-size:13.5px;
-  }
+  .sheet-handle{width:36px;height:4px;background:var(--muted-2);opacity:.4;border-radius:3px;margin:0 auto 14px}
+  .sheet-title{font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px;padding:0 4px}
+  .sheet-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .sheet-btn{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 4px;border-radius:14px;background:var(--glass-bg-2);border:1px solid var(--glass-border);transition:.15s}
+  .sheet-btn:hover{border-color:var(--accent);background:var(--glass-bg-3)}
+  .sheet-btn:active{transform:scale(.95)}
+  .sheet-btn .sic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-size:17px;background:var(--glass-bg-3)}
+  .sheet-btn .slb{font-size:11px;font-weight:600;color:var(--text);text-align:center}
+  .sheet-cancel{width:100%;padding:12px;border-radius:12px;margin-top:8px;background:var(--glass-bg-2);border:1px solid var(--glass-border);color:var(--muted);font-weight:600;font-size:13.5px}
 
-  .modal-backdrop{
-    position:fixed;inset:0;z-index:60;background:rgba(5,7,11,.72);backdrop-filter:blur(6px);
-    display:flex;align-items:flex-end;justify-content:center;animation:fadeIn .2s ease;padding:0;
-  }
-  @media (min-width:520px){ .modal-backdrop{align-items:center;padding:20px} }
-  .modal{
-    width:100%;max-width:480px;max-height:92dvh;overflow-y:auto;
-    background:linear-gradient(180deg,var(--surface-2),var(--surface));
-    border:1px solid var(--border);border-radius:24px 24px 0 0;
-    padding:18px 16px calc(18px + var(--safe-bottom));
-    animation:slideUp .28s cubic-bezier(.2,.9,.3,1);
-  }
-  @media (min-width:520px){
-    .modal{border-radius:22px;animation:pop .28s ease;padding:22px 20px}
-  }
+  .modal-backdrop{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.45);backdrop-filter:blur(8px);display:flex;align-items:flex-end;justify-content:center;animation:fadeIn .15s ease;padding:0}
+  body.light .modal-backdrop{background:rgba(0,0,0,.2)}
+  @media (min-width:520px){.modal-backdrop{align-items:center;padding:20px}}
+  .modal{width:100%;max-width:520px;max-height:92dvh;overflow-y:auto;border-radius:24px 24px 0 0;border-bottom:none;padding:18px 16px calc(18px + var(--safe-bottom));animation:slideUp .25s cubic-bezier(.2,.9,.3,1)}
+  @media (min-width:520px){.modal{border-radius:22px;border:1px solid var(--glass-border);animation:pop .2s ease;padding:22px 20px}}
   .modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
-  .modal-head h2{font-size:16px;font-weight:700;letter-spacing:-.2px}
+  .modal-head h2{font-size:15px;font-weight:600}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  @media (max-width:380px){ .grid2{grid-template-columns:1fr} }
+  @media (max-width:380px){.grid2{grid-template-columns:1fr}}
   .modal-actions{display:flex;gap:8px;align-items:center;margin-top:18px;flex-wrap:wrap}
   .spacer{flex:1}
-  .modal-actions .btn-primary{width:auto;padding:12px 22px;font-size:13.5px}
+  .modal-actions .btn-primary{width:auto;padding:11px 20px;font-size:13.5px}
 
   .notif-modal{max-width:560px}
   .notif-list{display:flex;flex-direction:column;gap:9px}
-  .notif-item{
-    background:linear-gradient(135deg, rgba(239,68,68,.09), rgba(245,158,11,.05));
-    border:1px solid rgba(239,68,68,.28);
-    border-radius:13px;padding:13px;animation:fade .3s ease;
-  }
-  .notif-head{display:flex;gap:11px;align-items:flex-start;margin-bottom:11px}
-  .notif-ico{
-    width:40px;height:40px;border-radius:12px;flex-shrink:0;
-    display:grid;place-items:center;font-size:19px;
-    background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.35);
-  }
+  .notif-item{border-radius:var(--radius-md);padding:13px;border-color:rgba(239,68,68,.28)}
+  .notif-head{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px}
+  .notif-ico{width:34px;height:34px;border-radius:9px;flex-shrink:0;display:grid;place-items:center;font-size:16px;font-weight:700;background:rgba(239,68,68,.14);border:1px solid rgba(239,68,68,.32);color:#fca5a5}
   .notif-info{flex:1;min-width:0}
-  .notif-shop{font-weight:800;font-size:14px;letter-spacing:-.2px;word-break:break-word}
+  .notif-shop{font-weight:700;font-size:14px;word-break:break-word}
   .notif-detail{font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.5}
-  .notif-bal{
-    display:inline-block;margin-top:6px;padding:4px 10px;border-radius:8px;
-    background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);
-    color:#fca5a5;font-weight:800;font-size:13px;letter-spacing:-.2px;
-  }
+  .notif-bal{display:inline-block;margin-top:6px;padding:4px 10px;border-radius:8px;background:rgba(239,68,68,.14);border:1px solid rgba(239,68,68,.3);color:#fca5a5;font-weight:700;font-size:13px}
+  body.light .notif-bal{color:#dc2626}
   .notif-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-  .notif-actions button{
-    padding:9px 10px;border-radius:9px;font-size:11.5px;font-weight:700;
-    display:inline-flex;align-items:center;justify-content:center;gap:4px;transition:.2s;
-    letter-spacing:.1px;white-space:nowrap;
-  }
-  .notif-actions button:active{transform:scale(.95)}
-  .notif-skip{background:var(--surface-2);border:1px solid var(--border);color:var(--muted)}
-  .notif-skip:hover{color:var(--text);border-color:#3a4256}
-  .notif-pay{
-    background:linear-gradient(135deg, rgba(16,185,129,.2), rgba(16,185,129,.1));
-    border:1px solid rgba(16,185,129,.45);color:#6ee7b7;
-  }
-  .notif-pay:hover{background:linear-gradient(135deg, rgba(16,185,129,.3), rgba(16,185,129,.15))}
-  .notif-bill{
-    background:linear-gradient(135deg, rgba(37,211,102,.2), rgba(37,211,102,.1));
-    border:1px solid rgba(37,211,102,.5);color:#6ee7b7;
-  }
-  .notif-bill:hover{background:linear-gradient(135deg, rgba(37,211,102,.35), rgba(37,211,102,.2))}
-  .notif-view{
-    background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.35);color:#c7d2fe;
-  }
-  .notif-view:hover{background:rgba(99,102,241,.2)}
-  .notif-more{
-    text-align:center;padding:12px;font-size:12px;color:var(--muted);
-    background:var(--surface-2);border:1px dashed var(--border);border-radius:11px;margin-top:4px;
-  }
-  .notif-empty{text-align:center;padding:50px 20px;color:var(--muted)}
-  .notif-empty .ico{font-size:52px;opacity:.4;margin-bottom:14px}
-  .notif-empty h3{font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px}
+  .notif-actions button{padding:9px 10px;border-radius:9px;font-size:11.5px;font-weight:600;transition:.15s}
+  .notif-skip{background:var(--glass-bg-3);border:1px solid var(--glass-border);color:var(--muted)}
+  .notif-pay{background:rgba(34,197,94,.16);border:1px solid rgba(34,197,94,.4);color:#86efac}
+  .notif-bill{background:rgba(34,197,94,.16);border:1px solid rgba(34,197,94,.4);color:#86efac}
+  .notif-view{background:rgba(59,130,246,.14);border:1px solid rgba(59,130,246,.4);color:#93c5fd}
+  body.light .notif-pay,body.light .notif-bill{color:#15803d}
+  body.light .notif-view{color:#1d4ed8}
+  .notif-more{text-align:center;padding:12px;font-size:12px;color:var(--muted);background:var(--glass-bg-2);border:1px dashed var(--glass-border);border-radius:10px;margin-top:4px}
+  .notif-empty{text-align:center;padding:44px 20px;color:var(--muted)}
+  .notif-empty .ico{font-size:44px;opacity:.4;margin-bottom:12px}
+  .notif-empty h3{font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px}
   .notif-empty p{font-size:12.5px;line-height:1.6}
 
-  .app-footer{
-    text-align:center;padding:18px 16px 22px;
-    font-size:11px;color:var(--muted);letter-spacing:1.5px;
-    font-weight:700;text-transform:uppercase;
-  }
-  .app-footer span{
-    background:linear-gradient(135deg,var(--accent),var(--accent-2));
-    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
-  }
+  .app-footer{text-align:center;padding:16px 16px 20px;font-size:10.5px;color:var(--muted-2);letter-spacing:.6px;font-weight:600;text-transform:uppercase}
 
-  .toast{
-    position:fixed;left:50%;transform:translateX(-50%);
-    bottom:calc(90px + var(--safe-bottom));
-    background:#1f2534;border:1px solid var(--border);
-    padding:11px 18px;border-radius:12px;font-size:12.5px;font-weight:600;
-    box-shadow:var(--shadow);z-index:90; animation:toastIn .3s ease;
-    max-width:85vw;text-align:center;
-  }
-  @keyframes toastIn{from{opacity:0;transform:translate(-50%,14px)}to{opacity:1;transform:translate(-50%,0)}}
+  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(88px + var(--safe-bottom));background:var(--glass-bg-3);border:1px solid var(--glass-border-strong);-webkit-backdrop-filter:blur(30px) saturate(180%);backdrop-filter:blur(30px) saturate(180%);padding:10px 18px;border-radius:12px;font-size:12.5px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.4),inset 0 1px 0 var(--glass-highlight);z-index:90;animation:toastIn .25s ease;max-width:85vw;text-align:center;color:var(--text)}
+  @keyframes toastIn{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
 
-  .notif-banner{
-    background:linear-gradient(135deg, rgba(239,68,68,.15), rgba(245,158,11,.08));
-    border:1px solid rgba(239,68,68,.35);border-radius:12px;
-    padding:11px 12px;margin-bottom:12px;font-size:12px;
-    display:flex;gap:9px;align-items:flex-start;cursor:pointer;transition:.2s;
-  }
-  .notif-banner:hover{border-color:rgba(239,68,68,.55)}
-  .notif-banner .ico{font-size:18px;flex-shrink:0}
-  .notif-banner strong{color:#fca5a5;display:block;margin-bottom:4px;font-size:12px}
-  .notif-banner ul{list-style:none;padding:0;font-size:11.5px;color:#c7cbd6;line-height:1.7}
+  .notif-banner{border-radius:var(--radius-md);padding:12px;margin-bottom:14px;font-size:12px;display:flex;gap:10px;align-items:flex-start;cursor:pointer;border-color:rgba(239,68,68,.28)}
+  .notif-banner .ico{font-size:17px;flex-shrink:0}
+  .notif-banner strong{color:#fca5a5;display:block;margin-bottom:4px;font-size:12.5px}
+  body.light .notif-banner strong{color:#dc2626}
+  .notif-banner ul{list-style:none;padding:0;font-size:11.5px;color:var(--muted);line-height:1.7}
   .notif-banner ul li{padding-left:12px;position:relative}
   .notif-banner ul li::before{content:"•";position:absolute;left:0;color:#fca5a5}
-  .notif-banner .tap-hint{font-size:10.5px;color:var(--muted);margin-top:6px;font-weight:600;letter-spacing:.2px}
+  .notif-banner .tap-hint{font-size:10.5px;color:var(--muted);margin-top:6px;font-weight:600}
 
-  .bill-preview{
-    background:var(--surface-2);border:1px solid var(--border);border-radius:11px;
-    padding:14px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
-    font-size:11.5px;line-height:1.65;
-    white-space:pre-wrap;word-break:break-word;color:#c7cbd6;
-    max-height:380px;overflow-y:auto;
-  }
+  .bills-layout{display:flex;flex-direction:column;gap:14px}
+  @media (min-width:1024px){.bills-layout{display:grid;grid-template-columns:340px 1fr;gap:18px;align-items:start}}
+  .mode-toggle{display:flex;gap:4px;background:var(--glass-bg-2);padding:4px;border-radius:10px;margin-bottom:14px;border:1px solid var(--glass-border)}
+  .mode-btn{flex:1;padding:9px;border-radius:7px;font-size:12.5px;font-weight:600;color:var(--muted);transition:.15s}
+  .mode-btn.active{background:var(--accent);color:#fff}
 
-  .profile-card{
-    display:flex;flex-direction:column;align-items:center;
-    padding:20px 14px;gap:10px;text-align:center;
-    background:linear-gradient(135deg, rgba(99,102,241,.15), rgba(139,92,246,.08));
-    border:1px solid rgba(99,102,241,.3);border-radius:16px;margin-bottom:14px;
-  }
-  .profile-logo{
-    width:96px;height:96px;border-radius:24px;overflow:hidden;
-    display:grid;place-items:center;font-size:44px;
-    background:linear-gradient(135deg,var(--accent),var(--accent-2));
-    border:2px solid rgba(255,255,255,.1);
-    box-shadow:0 10px 30px rgba(99,102,241,.45);position:relative;
-  }
+  .bill-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+  .bill-actions button{padding:12px 10px;border-radius:12px;font-size:12.5px;font-weight:600;text-align:center;line-height:1.2}
+  @media (min-width:640px){.bill-actions{grid-template-columns:repeat(4,1fr)}}
+  .btn-pdf{background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;border:1px solid rgba(220,38,38,.6);box-shadow:0 4px 14px rgba(220,38,38,.3),inset 0 1px 0 rgba(255,255,255,.15)}
+  .btn-pdf:hover{background:linear-gradient(135deg,#b91c1c,#991b1b)}
+  .btn-share{background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;border:1px solid rgba(59,130,246,.6);box-shadow:0 4px 14px rgba(59,130,246,.3),inset 0 1px 0 rgba(255,255,255,.15)}
+  .btn-share:hover{background:linear-gradient(135deg,#2563eb,#1d4ed8)}
+  .btn-wa{background:rgba(34,197,94,.16);border:1px solid rgba(34,197,94,.4);color:#86efac;-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
+  body.light .btn-wa{color:#15803d;background:rgba(34,197,94,.12)}
+  .btn-copy{background:var(--glass-bg-2);border:1px solid var(--glass-border);color:var(--text);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
+
+  .invoice-wrapper{background:#fff;color:#1a1f29;border-radius:14px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.4);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif}
+  body.light .invoice-wrapper{box-shadow:0 12px 40px rgba(0,0,0,.1)}
+  .invoice-doc{padding:28px 24px;font-size:12px;line-height:1.5;color:#1a1f29}
+  .invoice-header{padding-bottom:16px;border-bottom:2px solid #1a1f29;margin-bottom:20px;display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+  .invoice-title{font-size:20px;font-weight:700;letter-spacing:-.02em;color:#1a1f29;text-transform:uppercase}
+  .invoice-subtitle{font-size:11px;color:#6b7280;margin-top:2px;text-transform:uppercase;letter-spacing:.5px}
+  .invoice-meta{text-align:right;font-size:11px;color:#4b5563;line-height:1.7}
+  .invoice-meta strong{color:#1a1f29;font-weight:600}
+  .invoice-parties{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px}
+  @media (max-width:480px){.invoice-parties{grid-template-columns:1fr;gap:14px}}
+  .party-block .party-label{font-size:9.5px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid #e5e7eb}
+  .party-name{font-weight:700;font-size:13px;color:#1a1f29;margin-bottom:4px}
+  .party-line{font-size:11.5px;color:#4b5563;line-height:1.6}
+
+  .invoice-block{margin-bottom:18px}
+  .invoice-block-title{font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid #e5e7eb}
+  .invoice-prevbal{background:#f3f4f6;border-left:3px solid #1a1f29;padding:10px 12px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  .invoice-prevbal .lbl{font-size:11px;color:#4b5563;font-weight:600}
+  .invoice-prevbal .lbl small{display:block;font-size:10px;color:#9ca3af;font-weight:400;margin-top:2px}
+  .invoice-prevbal .val{font-size:14px;font-weight:700;color:#1a1f29;font-variant-numeric:tabular-nums}
+
+  .invoice-table{width:100%;border-collapse:collapse;font-size:11.5px}
+  .invoice-table thead th{text-align:left;padding:7px 6px;font-size:9.5px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;border-bottom:1.5px solid #d1d5db}
+  .invoice-table thead th.r{text-align:right}
+  .invoice-table tbody td{padding:9px 6px;border-bottom:1px solid #f3f4f6;vertical-align:top;color:#1a1f29}
+  .invoice-table tbody td.r{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+  .invoice-table tbody td.desc{color:#4b5563;font-size:11px}
+  .invoice-table tbody tr:last-child td{border-bottom:1px solid #d1d5db}
+  .invoice-table .ref{font-family:ui-monospace,monospace;font-size:10px;color:#6b7280}
+  .invoice-table .notes{font-size:10.5px;color:#6b7280;font-style:italic;margin-top:2px}
+
+  .invoice-payment-block{background:#f0fdf4;border-left:3px solid #22c55e;padding:10px 12px}
+  .invoice-payment-block .pay-line{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  .invoice-payment-block .pay-date{font-size:11px;color:#166534;font-weight:600}
+  .invoice-payment-block .pay-method{font-size:10.5px;color:#4b5563;margin-top:2px}
+  .invoice-payment-block .pay-amount{font-size:13px;font-weight:700;color:#15803d;font-variant-numeric:tabular-nums}
+
+  .invoice-total{margin-top:20px;padding-top:14px;border-top:2px solid #1a1f29;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  .invoice-total .tl{font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.8px}
+  .invoice-total .tv{font-size:20px;font-weight:800;color:#1a1f29;font-variant-numeric:tabular-nums}
+  .invoice-total.tv-clear .tv{color:#15803d}
+
+  .invoice-footer{margin-top:24px;padding-top:14px;border-top:1px solid #e5e7eb;text-align:center;font-size:10.5px;color:#6b7280;line-height:1.6}
+  .invoice-footer strong{color:#1a1f29;font-weight:600}
+
+  .invoice-empty{background:var(--glass-bg-2);color:var(--muted);border:1px dashed var(--glass-border);border-radius:14px;padding:60px 20px;text-align:center;font-size:13px;-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
+
+  .profile-card{display:flex;flex-direction:column;align-items:center;padding:20px 14px;gap:10px;text-align:center;background:linear-gradient(135deg,rgba(59,130,246,.14),rgba(37,99,235,.04)),var(--glass-bg);border:1px solid rgba(59,130,246,.28);border-radius:var(--radius-lg);margin-bottom:14px;-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur)}
+  .profile-logo{width:80px;height:80px;border-radius:20px;overflow:hidden;display:grid;place-items:center;font-size:36px;background:var(--accent);border:2px solid rgba(255,255,255,.12);position:relative;box-shadow:0 8px 24px rgba(59,130,246,.35)}
   .profile-logo img{width:100%;height:100%;object-fit:cover}
-  .profile-name{font-size:17px;font-weight:800;letter-spacing:-.3px}
-  .profile-biz{font-size:12.5px;color:var(--muted);margin-top:2px}
-  .profile-detail{
-    display:flex;align-items:center;gap:10px;padding:11px 12px;
-    background:var(--surface-2);border:1px solid var(--border);border-radius:11px;
-    margin-bottom:7px;font-size:12.5px;
-  }
-  .profile-detail .pico{font-size:16px;width:22px;text-align:center;flex-shrink:0}
+  .profile-name{font-size:16px;font-weight:700}
+  .profile-biz{font-size:12px;color:var(--muted);margin-top:2px}
+  .profile-detail{display:flex;align-items:center;gap:10px;padding:11px 12px;background:var(--glass-bg-2);border:1px solid var(--glass-border);border-radius:10px;margin-bottom:7px;font-size:12.5px}
+  .profile-detail .pico{font-size:15px;width:22px;text-align:center;flex-shrink:0}
   .profile-detail .plbl{color:var(--muted);font-size:10.5px;text-transform:uppercase;font-weight:600;letter-spacing:.3px}
   .profile-detail .pval{font-weight:600;word-break:break-word}
 
-  .upload-area{
-    display:flex;flex-direction:column;align-items:center;gap:12px;
-    padding:20px 16px;background:var(--surface-2);border:2px dashed var(--border);
-    border-radius:16px;cursor:pointer;transition:.2s;text-align:center;
-  }
-  .upload-area:hover{border-color:var(--accent);background:rgba(99,102,241,.05)}
-  .upload-area .up-preview{
-    width:96px;height:96px;border-radius:20px;overflow:hidden;
-    display:grid;place-items:center;font-size:40px;
-    background:linear-gradient(135deg,var(--accent),var(--accent-2));
-    box-shadow:0 8px 22px rgba(99,102,241,.35);
-  }
+  .upload-area{display:flex;flex-direction:column;align-items:center;gap:12px;padding:20px 16px;background:var(--glass-bg-2);border:2px dashed var(--glass-border);border-radius:16px;cursor:pointer;transition:.15s;text-align:center}
+  .upload-area:hover{border-color:var(--accent)}
+  .upload-area .up-preview{width:80px;height:80px;border-radius:18px;overflow:hidden;display:grid;place-items:center;font-size:34px;background:var(--accent)}
   .upload-area .up-preview img{width:100%;height:100%;object-fit:cover}
-  .upload-area .up-txt{font-size:12.5px;color:var(--muted);line-height:1.5}
+  .upload-area .up-txt{font-size:12px;color:var(--muted);line-height:1.5}
   .upload-area .up-txt strong{color:var(--text);display:block;font-size:13px;margin-bottom:3px}
   .upload-actions{display:flex;gap:8px;justify-content:center;margin-top:6px;flex-wrap:wrap}
-  .upload-actions button{
-    padding:7px 14px;border-radius:9px;font-size:12px;font-weight:600;
-    background:var(--surface-3);border:1px solid var(--border);color:var(--text);
-  }
-  .upload-actions button.danger{
-    background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.35);color:#fca5a5;
-  }
+  .upload-actions button{padding:7px 14px;border-radius:9px;font-size:12px;font-weight:600;background:var(--glass-bg-3);border:1px solid var(--glass-border);color:var(--text)}
+  .upload-actions button.danger{background:rgba(239,68,68,.14);border-color:rgba(239,68,68,.35);color:#fca5a5}
+  body.light .upload-actions button.danger{color:#dc2626}
 
-  .danger-zone{
-    background:linear-gradient(135deg, rgba(239,68,68,.08), rgba(239,68,68,.03));
-    border:1px solid rgba(239,68,68,.35);
-    border-radius:14px;padding:14px;margin-bottom:14px;
-  }
+  .danger-zone{background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.3);border-radius:var(--radius-lg);padding:14px;margin-bottom:14px;-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
   .danger-zone .section-title{color:#fca5a5}
-  .danger-info{
-    background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.28);
-    border-radius:11px;padding:12px;margin-bottom:12px;
-    font-size:12px;color:#fca5a5;line-height:1.7;
-  }
-  .danger-info strong{color:#fff;display:block;margin-bottom:6px}
-  .danger-counts{font-size:12px;color:#c7cbd6;line-height:1.9;margin-top:6px}
+  body.light .danger-zone .section-title{color:#dc2626}
+  .danger-info{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:10px;padding:12px;margin-bottom:12px;font-size:12px;color:#fca5a5;line-height:1.6}
+  body.light .danger-info{color:#dc2626}
+  .danger-info strong{color:var(--text);display:block;margin-bottom:6px}
+  .danger-counts{font-size:12px;color:var(--muted);line-height:1.8;margin-top:6px}
   .danger-counts b{color:#fca5a5}
+  body.light .danger-counts b{color:#dc2626}
 
-  .acct-status{
-    display:inline-flex;align-items:center;gap:6px;
-    padding:5px 11px;border-radius:20px;font-size:11px;font-weight:700;
-    letter-spacing:.3px;text-transform:uppercase;
-  }
-  .acct-status.approved{background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.4);color:#6ee7b7}
-  .acct-status.pending{background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.4);color:#fcd34d}
-  .acct-status.rejected{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:#fca5a5}
-  .acct-status .dot{width:6px;height:6px;border-radius:50%;background:currentColor;box-shadow:0 0 6px currentColor}
+  .acct-status{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:16px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+  .acct-status.approved{background:rgba(34,197,94,.16);border:1px solid rgba(34,197,94,.4);color:#86efac}
+  .acct-status.pending{background:rgba(234,179,8,.16);border:1px solid rgba(234,179,8,.4);color:#facc15}
+  .acct-status.rejected{background:rgba(239,68,68,.16);border:1px solid rgba(239,68,68,.4);color:#fca5a5}
+  body.light .acct-status.approved{color:#15803d}
+  body.light .acct-status.pending{color:#a16207}
+  body.light .acct-status.rejected{color:#dc2626}
+  .acct-status .dot{width:5px;height:5px;border-radius:50%;background:currentColor}
 
-  .spinner{
-    width:14px;height:14px;border:2px solid rgba(255,255,255,.3);
-    border-top-color:#fff;border-radius:50%;display:inline-block;
-    animation:spin .7s linear infinite;vertical-align:-3px;margin-right:6px;
-  }
+  .spinner{width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;display:inline-block;animation:spin .7s linear infinite;vertical-align:-2px;margin-right:6px}
 
   @media (min-width: 640px) {
-    body{font-size:14.5px}
-    .app-shell{max-width:720px}
-    .bottom-nav{max-width:720px}
+    .app-shell{max-width:760px}
+    .bottom-nav{max-width:760px}
     .container{padding:18px 20px 0}
-    .stats{grid-template-columns:1.4fr 1fr 1fr;gap:12px}
+    .stats{grid-template-columns:1.5fr 1fr 1fr;gap:12px}
     .stat-card.full{grid-column:auto}
-    .stat-card.accent .stat-value{font-size:26px}
+    .stat-card.accent .stat-value{font-size:24px}
     .chart-wrap{height:240px}
-    .section{padding:16px 16px}
-    .section-title{font-size:15px}
-    .shop-name{font-size:14.5px}
-    .shop-bal{font-size:14.5px}
-    .tx{padding:12px 13px}
-    .tx-icon{width:38px;height:38px;font-size:16px}
-    .tx-title{font-size:13.5px}
-    .tx-amount{font-size:14px}
-    .sheet{max-width:560px}
+    .section{padding:16px}
+    .sheet{max-width:600px}
     .sheet-grid{grid-template-columns:repeat(4,1fr);gap:12px}
-    .sheet-btn .sic{width:50px;height:50px;font-size:22px}
+    .sheet-btn .sic{width:44px;height:44px;font-size:19px}
     .sheet-btn .slb{font-size:12px}
-    .modal{max-width:520px}
-    .fab{right:24px;bottom:calc(88px + var(--safe-bottom));width:60px;height:60px}
+    .modal{max-width:560px}
+    .fab{right:24px;bottom:calc(84px + var(--safe-bottom))}
     .notif-actions{grid-template-columns:repeat(4,1fr)}
+    .invoice-doc{padding:36px 32px;font-size:12.5px}
   }
 
   @media (min-width: 1024px) {
-    body{font-size:14px}
     .app-shell{max-width:none;margin-left:240px;padding-bottom:40px}
     .sidebar{display:flex}
     .bottom-nav{display:none}
-    .topbar{position:sticky;top:0;padding:14px 28px;padding-top:14px}
-    .container{padding:22px 28px 40px;max-width:1200px;margin:0 auto}
-    .view .container{max-width:1200px}
+    .topbar{position:sticky;top:0;padding:12px 28px;border-radius:0}
+    .container{padding:22px 28px 40px;max-width:1280px;margin:0 auto}
     .stats{grid-template-columns:1.6fr 1fr 1fr;gap:14px;margin-bottom:18px}
-    .stat-card{padding:18px 20px;border-radius:16px}
-    .stat-card.accent .stat-value{font-size:32px}
-    .stat-value{font-size:22px}
-    .section{padding:20px;margin-bottom:18px;border-radius:16px}
-    .section-title{font-size:16px}
-    .chart-wrap{height:300px}
+    .stat-card{padding:18px 20px}
+    .stat-card.accent .stat-value{font-size:28px}
+    .stat-value{font-size:20px}
+    .section{padding:18px;margin-bottom:18px}
+    .chart-wrap{height:280px}
     .pc-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
     .pc-grid .full{grid-column:1/-1}
     .shop-list{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
     #shopList2{grid-template-columns:repeat(3,1fr)}
     .tx-list{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .tx-list.single{grid-template-columns:1fr}
-    .shop-item{padding:14px 16px;border-radius:14px}
-    .shop-avatar{width:46px;height:46px;font-size:18px}
-    .shop-name{font-size:14.5px}
-    .tx{padding:14px 16px;border-radius:14px}
-    .tx-icon{width:40px;height:40px;font-size:16px}
-    .tx-title{font-size:13.5px}
-    .profile-card{flex-direction:row;text-align:left;padding:24px 26px;gap:20px}
-    .profile-logo{width:100px;height:100px;flex-shrink:0}
-    .fab{right:28px;bottom:28px;width:64px;height:64px;font-size:30px;border-radius:20px}
-    .modal{max-width:560px;padding:26px 24px}
+    .profile-card{flex-direction:row;text-align:left;padding:22px 24px;gap:18px}
+    .profile-logo{width:88px;height:88px;flex-shrink:0}
+    .fab{right:28px;bottom:28px;width:56px;height:56px;font-size:26px}
+    .modal{max-width:600px;padding:26px 24px}
     .toast{bottom:40px}
-    .bills-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
-    .shop-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
-    .shop-detail-grid .full{grid-column:1/-1}
-    .notif-modal{max-width:640px}
+    .notif-modal{max-width:680px}
+    .invoice-doc{padding:40px 40px;font-size:13px}
+    .invoice-title{font-size:22px}
   }
-
   @media (min-width: 1440px) {
     .sidebar{width:260px}
     .app-shell{margin-left:260px}
-    .container{max-width:1300px}
+    .container{max-width:1360px}
     #shopList2{grid-template-columns:repeat(4,1fr)}
   }
 </style>
 </head>
 <body>
 
-<!-- ================= AUTH ================= -->
 <div id="authScreen" class="auth-wrap">
   <div class="auth-card">
     <div class="brand">
@@ -686,96 +489,63 @@
       <button type="button" class="tab active" data-mode="login" id="tabLogin">Login</button>
       <button type="button" class="tab" data-mode="signup" id="tabSignup">Sign Up</button>
     </div>
-    <form id="authForm" autocomplete="on">
+    <form id="authForm" autocomplete="on" method="post" action="#">
       <div class="field">
-        <label>Email</label>
-        <input type="email" id="email" required placeholder="you@example.com" autocomplete="email" />
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" required placeholder="you@example.com" autocomplete="username" />
       </div>
       <div class="field">
-        <label>Password</label>
-        <input type="password" id="password" required minlength="6" placeholder="••••••••" autocomplete="current-password" />
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required minlength="6" placeholder="••••••••" autocomplete="current-password" />
       </div>
       <button class="btn-primary" type="submit" id="authBtn">Login</button>
     </form>
     <p id="authMsg" class="msg"></p>
     <div style="text-align:center;margin-top:18px;font-size:11.5px;color:var(--muted);line-height:1.6">
-      🛡️ New accounts need admin approval before use
+      New accounts require admin approval
     </div>
   </div>
 </div>
 
-<!-- ================= PENDING SCREEN ================= -->
 <div id="pendingScreen" class="status-screen hidden">
   <div class="status-card">
-    <div class="status-icon pending">
-      <div class="ring"></div>
-      ⏳
-    </div>
+    <div class="status-icon pending"><div class="ring"></div>⏳</div>
     <div class="status-title">Awaiting Approval</div>
-    <div class="status-desc">
-      Your account has been created successfully.<br>
-      An administrator needs to approve it before you can start using the app.
-    </div>
-
+    <div class="status-desc">Your account has been created. An administrator needs to approve it before you can start using the app.</div>
     <div class="status-info">
-      <div class="status-info-row">
-        <span class="lbl">Email</span>
-        <span class="val" id="pendingEmail">—</span>
-      </div>
-      <div class="status-info-row">
-        <span class="lbl">Status</span>
-        <span class="val" style="color:#fcd34d">PENDING</span>
-      </div>
-      <div class="status-info-row">
-        <span class="lbl">Requested</span>
-        <span class="val" id="pendingSince">—</span>
-      </div>
+      <div class="status-info-row"><span class="lbl">Email</span><span class="val" id="pendingEmail">—</span></div>
+      <div class="status-info-row"><span class="lbl">Status</span><span class="val" style="color:#facc15">PENDING</span></div>
+      <div class="status-info-row"><span class="lbl">Requested</span><span class="val" id="pendingSince">—</span></div>
     </div>
-
     <div class="status-hint">
-      💡 This page updates automatically. Once an admin approves your account,
-      the app will open by itself.
-      <div style="margin-top:8px;text-align:center;color:#8b93a7">
-        Checking for approval<span class="checking-dots"><span></span><span></span><span></span></span>
+      This page updates automatically. Once approved, the app will open.
+      <div style="margin-top:8px;text-align:center;color:var(--muted-2)">
+        Checking<span class="checking-dots"><span></span><span></span><span></span></span>
       </div>
     </div>
-
     <div class="status-actions">
-      <button class="btn-ghost" id="pendingRefreshBtn">🔄 Refresh Status</button>
-      <button class="btn-danger" id="pendingLogoutBtn">⎋ Logout</button>
+      <button class="btn-ghost" id="pendingRefreshBtn">Refresh Status</button>
+      <button class="btn-danger" id="pendingLogoutBtn">Logout</button>
     </div>
   </div>
 </div>
 
-<!-- ================= REJECTED SCREEN ================= -->
 <div id="rejectedScreen" class="status-screen hidden">
   <div class="status-card">
     <div class="status-icon rejected">🚫</div>
     <div class="status-title" style="color:#fca5a5">Account Rejected</div>
-    <div class="status-desc">
-      Your account request was not approved by the administrator.
-      If you believe this is a mistake, please contact support.
-    </div>
-
+    <div class="status-desc">Your account request was not approved by the administrator. Please contact support if you believe this is a mistake.</div>
     <div class="status-info">
-      <div class="status-info-row">
-        <span class="lbl">Email</span>
-        <span class="val" id="rejectedEmail">—</span>
-      </div>
-      <div class="status-info-row">
-        <span class="lbl">Status</span>
-        <span class="val" style="color:#fca5a5">REJECTED</span>
-      </div>
+      <div class="status-info-row"><span class="lbl">Email</span><span class="val" id="rejectedEmail">—</span></div>
+      <div class="status-info-row"><span class="lbl">Status</span><span class="val" style="color:#fca5a5">REJECTED</span></div>
     </div>
-
     <div class="status-actions">
-      <button class="btn-ghost" id="rejectedRefreshBtn">🔄 Check Again</button>
-      <button class="btn-danger" id="rejectedLogoutBtn">⎋ Logout</button>
+      <button class="btn-ghost" id="rejectedRefreshBtn">Check Again</button>
+      <button class="btn-danger" id="rejectedLogoutBtn">Logout</button>
     </div>
   </div>
 </div>
 
-<!-- ================= APP ================= -->
 <div id="appScreen" class="app-shell hidden">
 
   <aside class="sidebar">
@@ -783,16 +553,16 @@
       <div class="ico" id="sbIcon">📱</div>
       <div style="min-width:0;flex:1">
         <div class="nm" id="sbName">Shop Ledger</div>
-        <div class="sub">Track your shop debts with ease</div>
+        <div class="sub">Debt Tracking</div>
       </div>
     </div>
     <nav class="sb-nav">
-      <button class="sb-item active" data-view="home"><span class="ic">🏠</span>Dashboard</button>
-      <button class="sb-item" data-view="shops"><span class="ic">🏪</span>Shops</button>
-      <button class="sb-item" data-view="bills"><span class="ic">📄</span>Bills</button>
-      <button class="sb-item" data-view="settings"><span class="ic">⚙️</span>Settings</button>
+      <button class="sb-item active" data-view="home"><span class="ic">◉</span>Dashboard</button>
+      <button class="sb-item" data-view="shops"><span class="ic">▤</span>Shops</button>
+      <button class="sb-item" data-view="bills"><span class="ic">▧</span>Bills</button>
+      <button class="sb-item" data-view="settings"><span class="ic">⚙</span>Settings</button>
     </nav>
-    <div class="sb-foot">Powered by<br><span>LOOKMOBILE - 0756947700</span></div>
+    <div class="sb-foot">Powered by<br>LOOKMOBILE</div>
   </aside>
 
   <header class="topbar">
@@ -801,12 +571,12 @@
       <span class="nm" id="brandName">Shop Ledger</span>
     </div>
     <div class="topbar-actions">
+      <button class="icon-btn" id="themeBtn" title="Toggle theme">☾</button>
       <button class="icon-btn" id="notifBtn" title="Notifications">🔔<span class="notif-badge hidden" id="notifBadge">0</span></button>
       <button class="icon-btn" id="logoutBtn" title="Logout">⎋</button>
     </div>
   </header>
 
-  <!-- HOME -->
   <div class="view active" id="viewHome">
     <div class="container">
       <div id="notifBanner"></div>
@@ -822,13 +592,13 @@
         </div>
         <div class="stat-card">
           <span class="stat-label">Total Shops</span>
-          <span class="stat-value c-purple" id="statShops">0</span>
+          <span class="stat-value c-blue" id="statShops">0</span>
         </div>
       </section>
       <div class="pc-grid">
         <section class="section full">
           <div class="section-head">
-            <div class="section-title">📈 Trend</div>
+            <div class="section-title">Trend</div>
             <div class="range-chips" id="chartRange">
               <button class="rc active" data-range="daily">D</button>
               <button class="rc" data-range="weekly">W</button>
@@ -838,56 +608,50 @@
           </div>
           <div class="chart-wrap"><canvas id="mainChart"></canvas></div>
         </section>
-
         <section class="section full">
           <div class="section-head">
-            <div class="section-title">🔥 Top Outstanding Shops</div>
+            <div class="section-title">Top Outstanding</div>
             <span class="section-sub" id="topOutCount">0</span>
           </div>
           <div id="topOutstanding" class="shop-list"></div>
         </section>
-
         <section class="section full">
           <div class="section-head">
-            <div class="section-title">💰 Recent Payments</div>
+            <div class="section-title">Recent Payments</div>
             <span class="section-sub" id="recentPayCount">0</span>
           </div>
           <div id="recentPay" class="tx-list"></div>
         </section>
-
         <div style="grid-column:1/-1" class="search">
           <input type="text" id="shopSearch" placeholder="Search shops..." />
-          <button type="button" class="search-clear hidden" data-clear-for="shopSearch" aria-label="Clear search">✕</button>
+          <button type="button" class="search-clear hidden" data-clear-for="shopSearch" aria-label="Clear">✕</button>
         </div>
         <section class="section" style="grid-column:1/-1">
           <div class="section-head">
-            <div class="section-title">🏪 Shops</div>
+            <div class="section-title">Shops</div>
             <span class="section-sub" id="shopCountLabel">0</span>
           </div>
           <div id="shopList" class="shop-list"></div>
         </section>
         <section class="section" style="grid-column:1/-1">
-          <div class="section-head">
-            <div class="section-title">🕒 Recent Transactions</div>
-          </div>
+          <div class="section-head"><div class="section-title">Recent Transactions</div></div>
           <div id="recentTx" class="tx-list"></div>
-          <button class="more-btn" id="moreTxBtn">View all transactions →</button>
+          <button class="more-btn" id="moreTxBtn">View all transactions</button>
         </section>
       </div>
-      <div class="app-footer">Powered by <span>POS-LOOKMOBILE</span></div>
+      <div class="app-footer">Powered by POS-LOOKMOBILE</div>
     </div>
   </div>
 
-  <!-- SHOPS -->
   <div class="view" id="viewShops">
     <div class="container">
       <div class="search">
         <input type="text" id="shopSearch2" placeholder="Search shops..." />
-        <button type="button" class="search-clear hidden" data-clear-for="shopSearch2" aria-label="Clear search">✕</button>
+        <button type="button" class="search-clear hidden" data-clear-for="shopSearch2" aria-label="Clear">✕</button>
       </div>
       <section class="section">
         <div class="section-head">
-          <div class="section-title">🏪 All Shops</div>
+          <div class="section-title">All Shops</div>
           <span class="section-sub" id="shopCountLabel2">0</span>
         </div>
         <div class="filters" id="shopSort">
@@ -899,43 +663,60 @@
         </div>
         <div id="shopList2" class="shop-list"></div>
       </section>
-      <div class="app-footer">Powered by <span>POS-LOOKMOBILE</span></div>
+      <div class="app-footer">Powered by POS-LOOKMOBILE</div>
     </div>
   </div>
 
-  <!-- BILLS -->
   <div class="view" id="viewBills">
     <div class="container">
-      <div class="bills-grid">
+      <div class="bills-layout">
         <section class="section">
-          <div class="section-head"><div class="section-title">📄 Create Bill</div></div>
-          <div class="field"><label>Select Shop</label><select id="billShop"></select></div>
-          <div class="grid2">
-            <div class="field"><label>From Date</label><input type="date" id="billFrom" /></div>
-            <div class="field"><label>To Date</label><input type="date" id="billTo" /></div>
+          <div class="section-head"><div class="section-title">Bill Generator</div></div>
+          <div class="field">
+            <label>Shop</label>
+            <select id="billShop"></select>
           </div>
-          <div class="filters" style="margin-top:4px">
-            <button class="chip" data-bill-range="today">Today</button>
-            <button class="chip" data-bill-range="week">This Week</button>
-            <button class="chip active" data-bill-range="month">This Month</button>
-            <button class="chip" data-bill-range="year">This Year</button>
-            <button class="chip" data-bill-range="all">All</button>
+          <div class="mode-toggle" id="billModeToggle">
+            <button class="mode-btn active" data-bill-mode="summary">Summary</button>
+            <button class="mode-btn" data-bill-mode="detailed">Full Details</button>
+          </div>
+          <div id="billDateControls" class="hidden">
+            <div class="grid2">
+              <div class="field"><label>From Date</label><input type="date" id="billFrom" /></div>
+              <div class="field"><label>To Date</label><input type="date" id="billTo" /></div>
+            </div>
+            <div class="filters" style="margin-bottom:0">
+              <button class="chip" data-bill-range="today">Today</button>
+              <button class="chip" data-bill-range="week">This Week</button>
+              <button class="chip active" data-bill-range="month">This Month</button>
+              <button class="chip" data-bill-range="year">This Year</button>
+              <button class="chip" data-bill-range="all">All</button>
+            </div>
+          </div>
+          <div class="field-hint" style="margin-top:12px;padding:10px;background:var(--glass-bg-2);border:1px solid var(--glass-border);border-radius:10px;color:var(--muted)">
+            <strong style="color:var(--text);display:block;margin-bottom:4px">Summary</strong>
+            Old balance + jobs after last payment + last payment reference.
+            <strong style="color:var(--text);display:block;margin-top:8px">Full Details</strong>
+            Complete transaction list within the selected date range.
           </div>
         </section>
-        <section class="section">
-          <div class="section-head"><div class="section-title">Preview</div></div>
-          <div class="bill-preview" id="billPreview">Select a shop to preview the bill...</div>
-          <div class="modal-actions" style="margin-top:14px">
-            <button type="button" class="btn-ghost" id="copyBillBtn">📋 Copy</button>
-            <button type="button" class="btn-green" id="whatsappBillBtn">💬 Send</button>
+
+        <section>
+          <div class="bill-actions">
+            <button class="btn-pdf" id="downloadPdfBtn">Download PDF</button>
+            <button class="btn-share" id="shareBtn">Share</button>
+            <button class="btn-wa" id="whatsappBillBtn">Send Text</button>
+            <button class="btn-copy" id="copyBillBtn">Copy Text</button>
+          </div>
+          <div id="billPreview">
+            <div class="invoice-empty">Select a shop to generate a bill</div>
           </div>
         </section>
       </div>
-      <div class="app-footer">Powered by <span>POS-LOOKMOBILE</span></div>
+      <div class="app-footer">Powered by POS-LOOKMOBILE</div>
     </div>
   </div>
 
-  <!-- SETTINGS -->
   <div class="view" id="viewSettings">
     <div class="container">
       <div class="profile-card">
@@ -953,62 +734,57 @@
 
       <section class="section">
         <div class="section-head">
-          <div class="section-title">👤 Profile & Business</div>
+          <div class="section-title">Profile & Business</div>
           <button class="icon-btn" id="editProfileBtn" title="Edit">✎</button>
         </div>
         <div class="profile-detail"><span class="pico">📞</span><div style="flex:1"><div class="plbl">Phone</div><div class="pval" id="pInfoPhone">—</div></div></div>
         <div class="profile-detail"><span class="pico">📍</span><div style="flex:1"><div class="plbl">Address</div><div class="pval" id="pInfoAddress">—</div></div></div>
         <div class="profile-detail"><span class="pico">✉️</span><div style="flex:1"><div class="plbl">Email</div><div class="pval" id="pInfoEmail">—</div></div></div>
-        <div class="profile-detail"><span class="pico">🆔</span><div style="flex:1"><div class="plbl">Account ID</div><div class="pval" id="pInfoUid" style="font-family:ui-monospace,monospace;font-size:10.5px;color:var(--muted)">—</div></div></div>
+        <div class="profile-detail"><span class="pico">#</span><div style="flex:1"><div class="plbl">Account ID</div><div class="pval" id="pInfoUid" style="font-family:ui-monospace,monospace;font-size:10.5px;color:var(--muted)">—</div></div></div>
       </section>
 
       <section class="section">
-        <div class="section-head"><div class="section-title">🔔 Notifications</div></div>
+        <div class="section-head"><div class="section-title">Notifications</div></div>
         <div style="font-size:12.5px;color:var(--muted);line-height:1.8;margin-bottom:10px">
-          ඔයාගේ හැම shop එකකටත් <b style="color:#c7d2fe">Due Days</b> set කරන්න.<br>
-          Job එකක් add කරන දවසේ ඉඳන් ඒ ගාන පස්සේ notification එනවා.<br>
-          Skip a notification to hide it for that due cycle.<br>
-          Mark as Paid to add a payment directly.
+          Set <b style="color:var(--accent)">Due Days</b> for each shop. A reminder appears that many days after a job is added.
         </div>
-        <button class="btn-ghost" style="width:100%" id="resetNotifsBtn">↺ Reset All Skipped Notifications</button>
+        <button class="btn-ghost" style="width:100%" id="resetNotifsBtn">Reset All Skipped Notifications</button>
       </section>
 
       <section class="section">
-        <div class="section-head"><div class="section-title">🔒 Privacy & Security</div></div>
+        <div class="section-head"><div class="section-title">Privacy & Security</div></div>
         <div style="font-size:12.5px;color:var(--muted);line-height:1.7">
-          ✅ All your data is stored in your private Firebase account.<br>
-          ✅ Only you can access your shops and transactions.<br>
-          ✅ No other user can see, edit, or delete your data.<br>
-          ✅ Data is encrypted in transit and at rest.
+          All your data is stored in your private Firebase account.<br>
+          Only you can access your shops and transactions.<br>
+          Data is encrypted in transit and at rest.
         </div>
       </section>
 
       <section class="section">
-        <div class="section-head"><div class="section-title">⚙️ Actions</div></div>
-        <button class="btn-ghost" style="width:100%;margin-bottom:8px" id="exportBtn">📤 Export Data (JSON)</button>
-        <button class="btn-danger" style="width:100%" id="logoutBtn2">⎋ Logout</button>
+        <div class="section-head"><div class="section-title">Actions</div></div>
+        <button class="btn-ghost" style="width:100%;margin-bottom:8px" id="exportBtn">Export Data (JSON)</button>
+        <button class="btn-danger" style="width:100%" id="logoutBtn2">Logout</button>
       </section>
 
       <div class="danger-zone">
         <div class="section-head" style="margin-bottom:10px">
-          <div class="section-title">⚠️ Danger Zone</div>
+          <div class="section-title">Danger Zone</div>
         </div>
         <div class="danger-info">
           <strong>Clear All Data</strong>
-          Permanently delete every shop, transaction, and profile info in this account. This action CANNOT be undone.
+          Permanently delete every shop, transaction, and profile info in this account. This action cannot be undone.
         </div>
-        <button class="btn-danger" style="width:100%" id="clearAllBtn">🗑️ Clear All Data</button>
+        <button class="btn-danger" style="width:100%" id="clearAllBtn">Clear All Data</button>
       </div>
 
-      <div class="app-footer">Powered by <span>POS-LOOKMOBILE</span></div>
+      <div class="app-footer">Powered by POS-LOOKMOBILE</div>
     </div>
   </div>
 
-  <!-- SHOP DETAIL -->
   <div class="view" id="viewShopDetail">
     <header class="topbar">
       <button class="icon-btn" id="backBtn" title="Back">←</button>
-      <div style="flex:1;text-align:center;font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 8px" id="detailShopName">Shop</div>
+      <div style="flex:1;text-align:center;font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 8px" id="detailShopName">Shop</div>
       <button class="icon-btn" id="editShopBtn" title="Edit">✎</button>
     </header>
     <div class="container">
@@ -1016,37 +792,37 @@
         <div class="full">
           <div class="section">
             <div style="display:flex;gap:11px;align-items:center;margin-bottom:12px">
-              <div class="shop-avatar" style="width:48px;height:48px;font-size:20px" id="detailAvatar">S</div>
+              <div class="shop-avatar" style="width:44px;height:44px;font-size:18px" id="detailAvatar">S</div>
               <div style="flex:1;min-width:0">
                 <div class="shop-name" style="font-size:15px" id="detailName">Shop Name</div>
-                <div class="shop-meta" id="detailMeta">📞 phone</div>
+                <div class="shop-meta" id="detailMeta">—</div>
               </div>
             </div>
-            <div class="stats" style="grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:0">
+            <div class="stats" style="grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:0">
               <div class="stat-card" style="padding:10px">
                 <span class="stat-label" style="font-size:9.5px">Outstanding</span>
-                <span class="stat-value c-amber" id="detailBal" style="font-size:15px">Rs 0</span>
+                <span class="stat-value c-amber" id="detailBal" style="font-size:14px">Rs 0</span>
               </div>
               <div class="stat-card" style="padding:10px">
                 <span class="stat-label" style="font-size:9.5px">Total Jobs</span>
-                <span class="stat-value c-red" id="detailJobTotal" style="font-size:15px">Rs 0</span>
+                <span class="stat-value c-red" id="detailJobTotal" style="font-size:14px">Rs 0</span>
               </div>
               <div class="stat-card" style="padding:10px">
                 <span class="stat-label" style="font-size:9.5px">Total Paid</span>
-                <span class="stat-value c-green" id="detailPayTotal" style="font-size:15px">Rs 0</span>
+                <span class="stat-value c-green" id="detailPayTotal" style="font-size:14px">Rs 0</span>
               </div>
             </div>
-            <div id="detailDueInfo" style="margin-top:10px;padding:10px;background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.25);border-radius:10px;font-size:11.5px;color:var(--muted);line-height:1.6"></div>
+            <div id="detailDueInfo" style="margin-top:10px;padding:10px;background:var(--glass-bg-2);border:1px solid var(--glass-border);border-radius:10px;font-size:11.5px;color:var(--muted);line-height:1.6"></div>
           </div>
           <div class="filters">
-            <button class="chip" data-shop-action="job" style="background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;border-color:transparent">🔧 Add Job</button>
-            <button class="chip" data-shop-action="pay" style="background:rgba(16,185,129,.15);color:#6ee7b7;border-color:rgba(16,185,129,.4)">💰 Payment</button>
-            <button class="chip" data-shop-action="bill" style="background:rgba(59,130,246,.15);color:#93c5fd;border-color:rgba(59,130,246,.4)">📄 Bill</button>
+            <button class="chip" data-shop-action="job" style="background:var(--accent);color:#fff;border-color:var(--accent)">Add Job</button>
+            <button class="chip" data-shop-action="pay" style="background:rgba(34,197,94,.16);color:#86efac;border-color:rgba(34,197,94,.35)">Payment</button>
+            <button class="chip" data-shop-action="bill" style="background:rgba(59,130,246,.14);color:#93c5fd;border-color:rgba(59,130,246,.35)">Bill</button>
           </div>
         </div>
         <section class="section">
           <div class="section-head">
-            <div class="section-title">📈 Trend</div>
+            <div class="section-title">Trend</div>
             <div class="range-chips" id="shopChartRange">
               <button class="rc active" data-range="daily">D</button>
               <button class="rc" data-range="weekly">W</button>
@@ -1058,7 +834,7 @@
         </section>
         <section class="section">
           <div class="section-head">
-            <div class="section-title">📋 Transactions</div>
+            <div class="section-title">Transactions</div>
             <span class="section-sub" id="detailTxCount">0</span>
           </div>
           <div class="filters" id="txFilters">
@@ -1068,45 +844,43 @@
           </div>
           <div class="search" style="margin-top:8px">
             <input type="text" id="txSearch" placeholder="Search transactions..." />
-            <button type="button" class="search-clear hidden" data-clear-for="txSearch" aria-label="Clear search">✕</button>
+            <button type="button" class="search-clear hidden" data-clear-for="txSearch" aria-label="Clear">✕</button>
           </div>
           <div id="detailTx" class="tx-list single"></div>
         </section>
       </div>
-      <div class="app-footer">Powered by <span>POS-LOOKMOBILE</span></div>
+      <div class="app-footer">Powered by POS-LOOKMOBILE</div>
     </div>
   </div>
 
   <nav class="bottom-nav" id="bottomNav">
-    <button class="bn-item active" data-view="home"><span class="ic">🏠</span>Home</button>
-    <button class="bn-item" data-view="shops"><span class="ic">🏪</span>Shops</button>
-    <button class="bn-item" data-view="bills"><span class="ic">📄</span>Bills</button>
-    <button class="bn-item" data-view="settings"><span class="ic">⚙️</span>Settings</button>
+    <button class="bn-item active" data-view="home"><span class="ic">◉</span>Home</button>
+    <button class="bn-item" data-view="shops"><span class="ic">▤</span>Shops</button>
+    <button class="bn-item" data-view="bills"><span class="ic">▧</span>Bills</button>
+    <button class="bn-item" data-view="settings"><span class="ic">⚙</span>Settings</button>
   </nav>
 
-  <button class="fab" id="fabBtn" title="Quick Add">＋</button>
+  <button class="fab" id="fabBtn" title="Quick Add">+</button>
 </div>
 
-<!-- ================= ACTION SHEET ================= -->
 <div class="sheet-backdrop hidden" id="sheetBackdrop">
   <div class="sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-title">Quick Actions</div>
     <div class="sheet-grid">
-      <button class="sheet-btn shop" data-sheet="addShop"><span class="sic">🏪</span><span class="slb">Add Shop</span></button>
-      <button class="sheet-btn job" data-sheet="addJob"><span class="sic">🔧</span><span class="slb">Add Job</span></button>
-      <button class="sheet-btn pay" data-sheet="addPay"><span class="sic">💰</span><span class="slb">Payment</span></button>
-      <button class="sheet-btn bill" data-sheet="addBill"><span class="sic">📄</span><span class="slb">Bill</span></button>
+      <button class="sheet-btn" data-sheet="addShop"><span class="sic">▤</span><span class="slb">Add Shop</span></button>
+      <button class="sheet-btn" data-sheet="addJob"><span class="sic">✚</span><span class="slb">Add Job</span></button>
+      <button class="sheet-btn" data-sheet="addPay"><span class="sic">₹</span><span class="slb">Payment</span></button>
+      <button class="sheet-btn" data-sheet="addBill"><span class="sic">▧</span><span class="slb">Bill</span></button>
     </div>
     <button class="sheet-cancel" id="sheetCancel">Cancel</button>
   </div>
 </div>
 
-<!-- ================= NOTIFICATION DRAWER ================= -->
 <div class="modal-backdrop hidden" id="modalNotifs">
   <div class="modal notif-modal">
     <div class="modal-head">
-      <h2>🔔 Notifications</h2>
+      <h2>Notifications</h2>
       <div style="display:flex;gap:8px">
         <button class="icon-btn" id="resetSkipsBtn" title="Reset skipped">↺</button>
         <button class="icon-btn" data-close="modalNotifs" type="button">✕</button>
@@ -1116,7 +890,6 @@
   </div>
 </div>
 
-<!-- ================= ALL TRANSACTIONS MODAL ================= -->
 <div class="modal-backdrop hidden" id="modalAllTx">
   <div class="modal">
     <div class="modal-head">
@@ -1127,7 +900,6 @@
   </div>
 </div>
 
-<!-- ================= SHOP MODAL ================= -->
 <div class="modal-backdrop hidden" id="modalShop">
   <div class="modal">
     <div class="modal-head">
@@ -1141,13 +913,9 @@
         <div class="field"><label>Phone</label><input id="sPhone" type="tel" placeholder="07X XXX XXXX" /></div>
         <div class="field"><label>Due Days</label><input id="sDueDays" type="number" min="0" max="365" placeholder="5" /></div>
       </div>
-      <div class="field">
-        <label>ℹ️ Due Days එක වැඩ කරන විදිය</label>
-        <div class="field-hint" style="padding:10px;background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.25);border-radius:10px">
-          📌 Job එකක් එකතු කරන දවසේ ඉඳන් <b>Due Days</b> ගාන පස්සේ notification එක එනවා.<br><br>
-          <b>උදා:</b> අද <b>Oct 15</b> → Due Days = <b>5</b> → Job add → <b>Oct 20</b> ට notify ✅<br>
-          <b>0</b> දැම්මොත් notification off.
-        </div>
+      <div id="sPhoneWarn" class="field-hint hidden" style="padding:10px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.35);border-radius:10px;margin:-4px 0 14px;color:#fca5a5"></div>
+      <div class="field-hint" style="padding:10px;background:var(--glass-bg-2);border:1px solid var(--glass-border);border-radius:10px;margin-bottom:14px">
+        Due Days is the number of days after a job is added that a reminder appears. Set to 0 to disable reminders.
       </div>
       <div class="field"><label>Address</label><input id="sAddress" placeholder="Street, City" /></div>
       <div class="field"><label>Notes</label><textarea id="sNotes" rows="2" placeholder="Additional info..."></textarea></div>
@@ -1161,7 +929,6 @@
   </div>
 </div>
 
-<!-- ================= JOB MODAL ================= -->
 <div class="modal-backdrop hidden" id="modalJob">
   <div class="modal">
     <div class="modal-head">
@@ -1173,7 +940,7 @@
       <div class="field"><label>Job Description *</label><input id="jDesc" required placeholder="Display replacement" /></div>
       <div class="field"><label>Price (Rs) *</label><input id="jPrice" type="number" min="0" step="0.01" required placeholder="0.00" /></div>
       <div class="field"><label>Notes</label><textarea id="jNotes" rows="2" placeholder="Additional info..."></textarea></div>
-      <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px">📅 Date & time will be recorded automatically</div>
+      <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px">Date & time will be recorded automatically</div>
       <div class="modal-actions">
         <div class="spacer"></div>
         <button type="button" class="btn-ghost" data-close="modalJob">Cancel</button>
@@ -1183,7 +950,6 @@
   </div>
 </div>
 
-<!-- ================= PAYMENT MODAL ================= -->
 <div class="modal-backdrop hidden" id="modalPay">
   <div class="modal">
     <div class="modal-head">
@@ -1197,16 +963,16 @@
         <div class="field">
           <label>Method</label>
           <select id="pMethod">
-            <option value="Cash">💵 Cash</option>
-            <option value="Bank Transfer">🏦 Bank Transfer</option>
-            <option value="Online">💳 Online</option>
-            <option value="Cheque">📝 Cheque</option>
-            <option value="Other">📦 Other</option>
+            <option value="Cash">Cash</option>
+            <option value="Bank Transfer">Bank Transfer</option>
+            <option value="Online">Online</option>
+            <option value="Cheque">Cheque</option>
+            <option value="Other">Other</option>
           </select>
         </div>
       </div>
       <div class="field"><label>Notes</label><textarea id="pNotes" rows="2" placeholder="Additional info..."></textarea></div>
-      <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px">📅 Date & time will be recorded automatically</div>
+      <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px">Date & time will be recorded automatically</div>
       <div class="modal-actions">
         <div class="spacer"></div>
         <button type="button" class="btn-ghost" data-close="modalPay">Cancel</button>
@@ -1216,11 +982,10 @@
   </div>
 </div>
 
-<!-- ================= PROFILE MODAL ================= -->
 <div class="modal-backdrop hidden" id="modalProfile">
   <div class="modal">
     <div class="modal-head">
-      <h2>Your Profile & Business</h2>
+      <h2>Profile & Business</h2>
       <button class="icon-btn" data-close="modalProfile" type="button">✕</button>
     </div>
     <form id="profileForm" data-form-nav="true">
@@ -1230,13 +995,13 @@
           <div class="up-preview" id="upPreview">📱</div>
           <div class="up-txt">
             <strong>Tap to upload logo</strong>
-            JPG, PNG or GIF — max 4 MB<br>
+            JPG, PNG — max 4 MB<br>
             <span style="opacity:.7;font-size:11px">Or use an emoji below</span>
           </div>
           <input type="file" id="logoFile" accept="image/*" style="display:none" />
           <div class="upload-actions">
-            <button type="button" id="pickFileBtn">📁 Choose Image</button>
-            <button type="button" class="danger" id="removeLogoBtn">🗑️ Remove</button>
+            <button type="button" id="pickFileBtn">Choose Image</button>
+            <button type="button" class="danger" id="removeLogoBtn">Remove</button>
           </div>
         </div>
       </div>
@@ -1255,7 +1020,6 @@
   </div>
 </div>
 
-<!-- ================= TRANSACTION EDIT MODAL ================= -->
 <div class="modal-backdrop hidden" id="modalTx">
   <div class="modal">
     <div class="modal-head">
@@ -1270,11 +1034,11 @@
       <div class="field hidden" id="txMethodField">
         <label>Method</label>
         <select id="txMethod">
-          <option value="Cash">💵 Cash</option>
-          <option value="Bank Transfer">🏦 Bank Transfer</option>
-          <option value="Online">💳 Online</option>
-          <option value="Cheque">📝 Cheque</option>
-          <option value="Other">📦 Other</option>
+          <option value="Cash">Cash</option>
+          <option value="Bank Transfer">Bank Transfer</option>
+          <option value="Online">Online</option>
+          <option value="Cheque">Cheque</option>
+          <option value="Other">Other</option>
         </select>
       </div>
       <div class="grid2">
@@ -1284,7 +1048,7 @@
       <div class="field"><label>Time</label><input id="txTime" type="time" /></div>
       <div class="field"><label>Notes</label><textarea id="txNotes" rows="2"></textarea></div>
       <div class="modal-actions">
-        <button type="button" class="btn-danger" id="deleteTxBtn">🗑️ Delete</button>
+        <button type="button" class="btn-danger" id="deleteTxBtn">Delete</button>
         <div class="spacer"></div>
         <button type="button" class="btn-ghost" data-close="modalTx">Cancel</button>
         <button type="submit" class="btn-primary" id="saveTxBtn">Save</button>
@@ -1293,33 +1057,28 @@
   </div>
 </div>
 
-<!-- ================= CLEAR DATA MODAL ================= -->
 <div class="modal-backdrop hidden" id="modalClear">
   <div class="modal">
     <div class="modal-head">
-      <h2 style="color:#fca5a5">⚠️ Clear All Data</h2>
+      <h2 style="color:#fca5a5">Clear All Data</h2>
       <button class="icon-btn" data-close="modalClear" type="button">✕</button>
     </div>
     <div class="danger-info">
       <strong>This will permanently delete:</strong>
       <div class="danger-counts" id="dangerCounts">
-        • All shops<br>
-        • All transactions<br>
-        • Your profile & logo
+        • All shops<br>• All transactions<br>• Your profile & logo
       </div>
-      <div style="margin-top:10px;font-size:11.5px;color:#fca5a5">
-        <strong>This action CANNOT be undone.</strong>
-      </div>
+      <div style="margin-top:10px;font-size:11.5px;color:#fca5a5"><strong>This action CANNOT be undone.</strong></div>
     </div>
     <div class="field">
-      <label>Enter your account password to confirm</label>
+      <label>Enter your password to confirm</label>
       <input type="password" id="clearPassword" placeholder="Your account password" autocomplete="current-password" />
     </div>
     <p id="clearMsg" class="msg"></p>
     <div class="modal-actions">
       <div class="spacer"></div>
       <button type="button" class="btn-ghost" data-close="modalClear">Cancel</button>
-      <button type="button" class="btn-danger" id="confirmClearBtn">🗑️ Delete Everything</button>
+      <button type="button" class="btn-danger" id="confirmClearBtn">Delete Everything</button>
     </div>
   </div>
 </div>
@@ -1352,10 +1111,9 @@ const db   = getFirestore(app);
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c =>
   ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const nf = new Intl.NumberFormat('en-LK', { maximumFractionDigits: 2 });
+const nf = new Intl.NumberFormat('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmt = n => nf.format(Number(n) || 0);
 
-/* ============ LOCAL-TIME DATE HELPERS ============ */
 const localDateStr = (d) => {
   const y = d.getFullYear();
   const m = String(d.getMonth()+1).padStart(2,'0');
@@ -1369,23 +1127,53 @@ const nowTime = () => {
   return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
 };
 const nowStamp = () => ({ date: todayStr(), time: nowTime() });
+
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MON_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
 function formatDate(str){
   if(!str) return '';
   const [y,m,d] = str.split('-');
-  const M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  return `${parseInt(d,10)} ${M[parseInt(m,10)-1]} ${y}`;
+  return `${parseInt(d,10)} ${MON[parseInt(m,10)-1]} ${y}`;
 }
-/* Add days to a YYYY-MM-DD string, returns YYYY-MM-DD */
+function formatDateLong(str){
+  if(!str) return '';
+  const [y,m,d] = str.split('-');
+  return `${parseInt(d,10)} ${MON_FULL[parseInt(m,10)-1]} ${y}`;
+}
 function addDays(dateStr, days){
   const d = new Date(dateStr + 'T00:00:00');
   d.setDate(d.getDate() + Number(days));
   return localDateStr(d);
 }
-/* Days between two YYYY-MM-DD (b - a) */
 function daysBetween(aStr, bStr){
   const a = new Date(aStr + 'T00:00:00').getTime();
   const b = new Date(bStr + 'T00:00:00').getTime();
   return Math.round((b - a) / (1000*60*60*24));
+}
+function dtKey(tx){ return (tx.date || '') + ' ' + (tx.time || ''); }
+
+function applyTheme(theme){
+  document.body.classList.toggle('light', theme === 'light');
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', theme === 'light' ? '#eef2f8' : '#0a0e17');
+  const btn = $('themeBtn');
+  if (btn) btn.textContent = theme === 'light' ? '☾' : '☀';
+  if (state.user) {
+    try { renderMainChart(); } catch(e){}
+    if (state.currentShopId) { try { renderShopChart(); } catch(e){} }
+  }
+}
+function initTheme(){
+  let saved = null;
+  try { saved = localStorage.getItem('theme'); } catch(e){}
+  applyTheme(saved === 'light' ? 'light' : 'dark');
+}
+function toggleTheme(){
+  const isLight = !document.body.classList.contains('light');
+  const theme = isLight ? 'light' : 'dark';
+  try { localStorage.setItem('theme', theme); } catch(e){}
+  applyTheme(theme);
 }
 
 const state = {
@@ -1393,11 +1181,17 @@ const state = {
   currentShopId: null, chartRange: 'daily', shopChartRange: 'daily',
   txFilter: 'all', txSearch: '', shopSearch: '',
   shopSort: 'az',
+  billMode: 'summary',
   billRange: 'month', billFrom: null, billTo: null, billShopId: null,
   pendingLogoData: null,
   approvalStatus: null,
-  unsubUserDoc: null
+  previousView: 'home',
+  unsubUserDoc: null,
+  unsubShops: null,
+  unsubTxs: null
 };
+
+initTheme();
 
 const NOTIF_MAX = 10;
 
@@ -1408,30 +1202,26 @@ function toast(msg){
   el.className = 'toast'; el.textContent = msg;
   document.body.appendChild(el);
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.remove(), 2600);
+  toastTimer = setTimeout(() => el.remove(), 2800);
 }
 
-/* ============ BROWSER TAB TITLE BADGE ============ */
 const BASE_TITLE = 'Shop Ledger';
 function updateDocTitle(count){
   document.title = count > 0 ? `(${count}) ${BASE_TITLE}` : BASE_TITLE;
 }
 
-/* ================= SCREEN SWITCHING ================= */
 function showScreen(name){
-  ['authScreen','pendingScreen','rejectedScreen','appScreen'].forEach(id => {
-    $(id).classList.add('hidden');
-  });
+  ['authScreen','pendingScreen','rejectedScreen','appScreen'].forEach(id => $(id).classList.add('hidden'));
   $(name).classList.remove('hidden');
 }
 
-/* ================= AUTH ================= */
 let authMode = 'login';
 function setAuthMode(mode){
   authMode = mode;
   $('tabLogin').classList.toggle('active', mode === 'login');
   $('tabSignup').classList.toggle('active', mode === 'signup');
   $('authBtn').textContent = mode === 'login' ? 'Login' : 'Sign Up';
+  $('password').setAttribute('autocomplete', mode === 'login' ? 'current-password' : 'new-password');
   $('authMsg').textContent = ''; $('authMsg').className = 'msg';
 }
 $('tabLogin').addEventListener('click', e => { e.preventDefault(); setAuthMode('login'); });
@@ -1477,10 +1267,14 @@ $('authForm').addEventListener('submit', async (e) => {
           createdAt: Date.now(),
           requestedAt: Date.now()
         });
-      } catch (err) {
-        console.error('Failed to create user doc', err);
-      }
+      } catch (err) { console.error('Failed to create user doc', err); }
     }
+    try {
+      if (window.PasswordCredential && navigator.credentials) {
+        const cred = new PasswordCredential({ id: email, password: pass, name: email });
+        await navigator.credentials.store(cred);
+      }
+    } catch (_) {}
   } catch (err) {
     console.error(err); msg.className = 'msg err'; msg.textContent = authErrorEn(err.code);
   } finally { btn.disabled = false; btn.textContent = orig; }
@@ -1497,14 +1291,11 @@ $('logoutBtn2').addEventListener('click', async () => { if (confirm('Logout?')) 
 $('pendingLogoutBtn').addEventListener('click', async () => { if (confirm('Logout?')) await doLogout(); });
 $('rejectedLogoutBtn').addEventListener('click', async () => { if (confirm('Logout?')) await doLogout(); });
 
-/* ================= AUTH STATE — approval gate ================= */
 onAuthStateChanged(auth, async (user) => {
   state.user = user;
-
   if (state.unsubUserDoc) { state.unsubUserDoc(); state.unsubUserDoc = null; }
   if (state.unsubShops) { state.unsubShops(); state.unsubShops = null; }
   if (state.unsubTxs) { state.unsubTxs(); state.unsubTxs = null; }
-
   if (!user) {
     state.profile = null; state.shops = []; state.txs = [];
     state.approvalStatus = null;
@@ -1512,52 +1303,33 @@ onAuthStateChanged(auth, async (user) => {
     showScreen('authScreen');
     return;
   }
-
   $('pendingEmail').textContent = user.email;
   $('rejectedEmail').textContent = user.email;
-
   try {
     const userRef = doc(db, 'users', user.uid);
     const snap = await getDoc(userRef);
-
     if (!snap.exists()) {
       try {
         await setDoc(userRef, {
-          email: user.email,
-          status: 'pending',
-          createdAt: Date.now(),
-          requestedAt: Date.now()
+          email: user.email, status: 'pending',
+          createdAt: Date.now(), requestedAt: Date.now()
         });
-        showPending(user);
-        return;
-      } catch (err) {
-        console.error('Cannot create user doc', err);
-        showPending(user);
-        return;
-      }
+        showPending(user); return;
+      } catch (err) { console.error('Cannot create user doc', err); showPending(user); return; }
     }
-
     const data = snap.data();
     handleApprovalStatus(user, data);
-
     state.unsubUserDoc = onSnapshot(userRef, (s) => {
       if (!s.exists()) return;
       const newData = s.data();
-      if (newData.status !== state.approvalStatus) {
-        handleApprovalStatus(user, newData);
-      }
+      if (newData.status !== state.approvalStatus) handleApprovalStatus(user, newData);
     }, err => console.error('user doc watch error', err));
-
-  } catch (err) {
-    console.error('Approval check failed', err);
-    showPending(user);
-  }
+  } catch (err) { console.error('Approval check failed', err); showPending(user); }
 });
 
 function handleApprovalStatus(user, data){
   const status = data?.status || 'pending';
   state.approvalStatus = status;
-
   if (status === 'approved') {
     showScreen('appScreen');
     loadProfile(user.uid);
@@ -1565,62 +1337,42 @@ function handleApprovalStatus(user, data){
     applyBillRange('month');
     updateAccountBadge('approved');
   } else if (status === 'rejected') {
-    updateDocTitle(0);
-    showScreen('rejectedScreen');
+    updateDocTitle(0); showScreen('rejectedScreen');
   } else {
-    updateDocTitle(0);
-    showPending(user, data);
+    updateDocTitle(0); showPending(user, data);
   }
 }
-
 function showPending(user, data){
   showScreen('pendingScreen');
   if (data?.requestedAt) {
     const d = new Date(data.requestedAt);
-    const M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    $('pendingSince').textContent = `${d.getDate()} ${M[d.getMonth()]} ${d.getFullYear()}`;
-  } else {
-    $('pendingSince').textContent = 'Just now';
-  }
+    $('pendingSince').textContent = `${d.getDate()} ${MON[d.getMonth()]} ${d.getFullYear()}`;
+  } else $('pendingSince').textContent = 'Just now';
 }
-
 function updateAccountBadge(status){
-  const el = $('acctStatusBadge');
-  if (!el) return;
+  const el = $('acctStatusBadge'); if (!el) return;
   el.className = 'acct-status ' + status;
   const txt = status === 'approved' ? 'Approved' : (status === 'rejected' ? 'Rejected' : 'Pending');
   el.innerHTML = `<span class="dot"></span> ${txt}`;
 }
-
 async function refreshApproval(){
   if (!state.user) return;
   try {
     const snap = await getDoc(doc(db, 'users', state.user.uid));
-    if (snap.exists()) {
-      handleApprovalStatus(state.user, snap.data());
-      toast('Status refreshed');
-    } else {
-      toast('Still pending');
-    }
-  } catch(e) {
-    console.error(e);
-    toast('Could not refresh');
-  }
+    if (snap.exists()) { handleApprovalStatus(state.user, snap.data()); toast('Status refreshed'); }
+    else toast('Still pending');
+  } catch(e) { console.error(e); toast('Could not refresh'); }
 }
 $('pendingRefreshBtn').addEventListener('click', refreshApproval);
 $('rejectedRefreshBtn').addEventListener('click', refreshApproval);
 
-/* ================= PROFILE ================= */
 async function loadProfile(uid){
   try {
     const ref = doc(db, 'users', uid, 'profile', 'main');
     const snap = await getDoc(ref);
     if (snap.exists()) state.profile = snap.data();
     else {
-      state.profile = {
-        owner:'', businessName:'', phone:'', address:'', businessEmail:'',
-        icon:'📱', iconUrl:null, createdAt: Date.now()
-      };
+      state.profile = { owner:'', businessName:'', phone:'', address:'', businessEmail:'', icon:'📱', iconUrl:null, createdAt: Date.now() };
       await setDoc(ref, state.profile);
     }
     renderProfile();
@@ -1653,7 +1405,6 @@ function renderProfile(){
   updateAccountBadge(state.approvalStatus || 'approved');
 }
 
-/* ================= IMAGE RESIZE ================= */
 async function resizeImage(file, maxSize=256, quality=0.82){
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -1696,10 +1447,7 @@ $('editProfileBtn').addEventListener('click', () => {
   setTimeout(() => $('pfOwner').focus(), 120);
 });
 $('pickFileBtn').addEventListener('click', () => $('logoFile').click());
-$('uploadArea').addEventListener('click', e => {
-  if (e.target.closest('button')) return;
-  $('logoFile').click();
-});
+$('uploadArea').addEventListener('click', e => { if (e.target.closest('button')) return; $('logoFile').click(); });
 $('logoFile').addEventListener('change', async (e) => {
   const file = e.target.files?.[0]; if (!file) return;
   if (file.size > 4 * 1024 * 1024) { toast('File too large. Max 4 MB.'); return; }
@@ -1708,7 +1456,7 @@ $('logoFile').addEventListener('change', async (e) => {
     const dataUrl = await resizeImage(file, 256, 0.82);
     state.pendingLogoData = dataUrl;
     renderUploadPreview();
-    toast('✓ Image ready. Tap Save to apply.');
+    toast('Image ready. Tap Save.');
   } catch(err) { console.error(err); toast('Failed to process image'); }
   e.target.value = '';
 });
@@ -1736,12 +1484,11 @@ $('profileForm').addEventListener('submit', async (e) => {
     state.profile = { ...state.profile, ...data };
     renderProfile();
     closeModal('modalProfile');
-    toast('✓ Profile saved');
+    toast('Profile saved');
   } catch(e) { console.error(e); toast('Error saving profile'); }
   finally { btn.disabled = false; btn.textContent = 'Save'; }
 });
 
-/* ================= FIRESTORE SUBS ================= */
 function subscribeAll(uid){
   if (state.unsubShops) state.unsubShops();
   if (state.unsubTxs) state.unsubTxs();
@@ -1752,16 +1499,11 @@ function subscribeAll(uid){
   }, err => { console.error(err); toast('Failed to load shops'); });
   state.unsubTxs = onSnapshot(collection(db, 'users', uid, 'transactions'), snap => {
     state.txs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    state.txs.sort((a,b) => {
-      const ad = (a.date||'') + ' ' + (a.time||'');
-      const bd = (b.date||'') + ' ' + (b.time||'');
-      return bd.localeCompare(ad);
-    });
+    state.txs.sort((a,b) => dtKey(b).localeCompare(dtKey(a)));
     renderAll();
   }, err => { console.error(err); toast('Failed to load transactions'); });
 }
 
-/* ================= HELPERS ================= */
 function shopBalance(shopId){
   let bal = 0;
   for (const t of state.txs) {
@@ -1787,77 +1529,46 @@ function genRef(type){
   const rand = String(Math.floor(Math.random()*10000)).padStart(4,'0');
   return (type === 'job' ? 'LMJ-' : 'LMP-') + ymd + '-' + rand;
 }
-/* Latest job of a shop (returns tx object or null) */
 function latestJobOf(shopId){
   const jobs = state.txs.filter(t => t.shopId === shopId && t.type === 'job' && t.date);
   if (!jobs.length) return null;
-  jobs.sort((a,b) => ((a.date||'') + ' ' + (a.time||'')).localeCompare((b.date||'') + ' ' + (b.time||'')));
+  jobs.sort((a,b) => dtKey(a).localeCompare(dtKey(b)));
   return jobs[jobs.length - 1];
 }
 
-/* ============================================================
-   NOTIFICATION SYSTEM — Due Days after job
-   ============================================================ */
 function getSkippedKey(){ return 'notifSkipped_' + (state.user?.uid || 'anon'); }
 function getSeenKey(){ return 'notifSeen_' + (state.user?.uid || 'anon'); }
-function loadSkipped(){
-  try { return JSON.parse(localStorage.getItem(getSkippedKey()) || '{}'); }
-  catch { return {}; }
-}
-function saveSkipped(obj){ localStorage.setItem(getSkippedKey(), JSON.stringify(obj)); }
-function loadSeen(){
-  try { return JSON.parse(localStorage.getItem(getSeenKey()) || '{}'); }
-  catch { return {}; }
-}
-function saveSeen(obj){ localStorage.setItem(getSeenKey(), JSON.stringify(obj)); }
+function loadSkipped(){ try { return JSON.parse(localStorage.getItem(getSkippedKey()) || '{}'); } catch { return {}; } }
+function saveSkipped(obj){ try { localStorage.setItem(getSkippedKey(), JSON.stringify(obj)); } catch(e){} }
+function loadSeen(){ try { return JSON.parse(localStorage.getItem(getSeenKey()) || '{}'); } catch { return {}; } }
+function saveSeen(obj){ try { localStorage.setItem(getSeenKey(), JSON.stringify(obj)); } catch(e){} }
 
 function getNotifications(){
   const today = todayStr();
   const skipped = loadSkipped();
   const notifs = [];
-
   state.shops.forEach(shop => {
     const dueDays = Math.max(0, Math.floor(Number(shop.dueDays) || 0));
     if (!dueDays) return;
-
     const latestJob = latestJobOf(shop.id);
     if (!latestJob || !latestJob.date) return;
-
-    // Due date = latest job date + dueDays
     const dueDateStr = addDays(latestJob.date, dueDays);
-
-    // Not yet due → skip
     if (today < dueDateStr) return;
-
-    // Only if balance > 0
     const bal = shopBalance(shop.id);
     if (bal <= 0.01) return;
-
-    // Skip key ties to this specific due cycle (latest job date)
     const skipKey = shop.id + '_' + latestJob.date + '_' + dueDateStr;
     if (skipped[skipKey]) return;
-
     const daysOverdue = daysBetween(dueDateStr, today);
-
-    notifs.push({
-      shop, bal, skipKey,
-      dueDateStr, dueDays, daysOverdue,
-      latestJobDate: latestJob.date,
-      latestJobRef: latestJob.refNo
-    });
+    notifs.push({ shop, bal, skipKey, dueDateStr, dueDays, daysOverdue, latestJobDate: latestJob.date, latestJobRef: latestJob.refNo });
   });
-
   notifs.sort((a,b) => b.bal - a.bal);
   return notifs;
 }
-
-/* Unseen = notifications whose skipKey hasn't been viewed yet */
 function getUnseenNotifications(){
   const all = getNotifications();
   const seen = loadSeen();
   return all.filter(n => !seen[n.skipKey]);
 }
-
 function markAllNotifsSeen(){
   const all = getNotifications();
   if (!all.length) return;
@@ -1865,18 +1576,13 @@ function markAllNotifsSeen(){
   all.forEach(n => { seen[n.skipKey] = Date.now(); });
   saveSeen(seen);
 }
-
 function renderNotifBadge(){
   const unseenCount = getUnseenNotifications().length;
   const badge = $('notifBadge');
   if (!unseenCount) badge.classList.add('hidden');
-  else {
-    badge.textContent = unseenCount > 99 ? '99+' : unseenCount;
-    badge.classList.remove('hidden');
-  }
+  else { badge.textContent = unseenCount > 99 ? '99+' : unseenCount; badge.classList.remove('hidden'); }
   updateDocTitle(unseenCount);
 }
-
 function renderNotifBanner(){
   const notifs = getNotifications();
   const banner = $('notifBanner');
@@ -1890,29 +1596,22 @@ function renderNotifBanner(){
         <strong>${notifs.length} payment${notifs.length>1?'s':''} due</strong>
         <ul>
           ${shown.map(n => `<li>${esc(n.shop.name)} — Rs ${fmt(n.bal)}${n.daysOverdue>0?' <span style="color:#fca5a5">('+n.daysOverdue+'d late)</span>':''}</li>`).join('')}
-          ${more > 0 ? `<li>+ ${more} more...</li>` : ''}
+          ${more > 0 ? `<li>+ ${more} more</li>` : ''}
         </ul>
-        <div class="tap-hint">👆 Tap to view all & manage</div>
+        <div class="tap-hint">Tap to view all</div>
       </div>
     </div>`;
   banner.querySelector('.notif-banner').addEventListener('click', openNotifDrawer);
 }
-
 function notifStatusText(n){
-  if (n.daysOverdue > 0) return `⚠️ Overdue by ${n.daysOverdue} day${n.daysOverdue===1?'':'s'}`;
-  return '📅 Due today';
+  if (n.daysOverdue > 0) return `Overdue by ${n.daysOverdue} day${n.daysOverdue===1?'':'s'}`;
+  return 'Due today';
 }
-
 function renderNotifList(){
   const all = getNotifications();
   const list = $('notifList');
   if (!all.length) {
-    list.innerHTML = `
-      <div class="notif-empty">
-        <div class="ico">✅</div>
-        <h3>All Caught Up!</h3>
-        <p>No pending payment reminders right now.<br>They'll appear when a shop reaches its due days after a job.</p>
-      </div>`;
+    list.innerHTML = `<div class="notif-empty"><div class="ico">✓</div><h3>All Caught Up</h3><p>No pending payment reminders right now.</p></div>`;
     return;
   }
   const shown = all.slice(0, NOTIF_MAX);
@@ -1921,30 +1620,28 @@ function renderNotifList(){
   html += shown.map(n => `
     <div class="notif-item">
       <div class="notif-head">
-        <div class="notif-ico">${n.daysOverdue>0?'⚠️':'⏰'}</div>
+        <div class="notif-ico">!</div>
         <div class="notif-info">
           <div class="notif-shop">${esc(n.shop.name)}</div>
           <div class="notif-detail">
             ${notifStatusText(n)}<br>
-            🔧 Last job: ${formatDate(n.latestJobDate)}<br>
-            📅 Due: ${formatDate(n.dueDateStr)} <span style="opacity:.7">(+${n.dueDays} days)</span>
-            ${n.shop.phone ? '<br>📞 '+esc(n.shop.phone) : ''}
+            Last job: ${formatDate(n.latestJobDate)}<br>
+            Due: ${formatDate(n.dueDateStr)} (+${n.dueDays} days)
+            ${n.shop.phone ? '<br>Phone: '+esc(n.shop.phone) : ''}
           </div>
           <div class="notif-bal">Rs ${fmt(n.bal)} outstanding</div>
         </div>
       </div>
       <div class="notif-actions">
-        <button class="notif-pay" data-notif-action="pay" data-shop-id="${n.shop.id}">💰 Mark Paid</button>
-        <button class="notif-bill" data-notif-action="bill" data-shop-id="${n.shop.id}">📄 Send Bill</button>
-        <button class="notif-view" data-notif-action="view" data-shop-id="${n.shop.id}">👁 View</button>
-        <button class="notif-skip" data-notif-action="skip" data-skip-key="${esc(n.skipKey)}">⏭ Skip</button>
+        <button class="notif-pay" data-notif-action="pay" data-shop-id="${n.shop.id}">Mark Paid</button>
+        <button class="notif-bill" data-notif-action="bill" data-shop-id="${n.shop.id}">Send Bill</button>
+        <button class="notif-view" data-notif-action="view" data-shop-id="${n.shop.id}">View</button>
+        <button class="notif-skip" data-notif-action="skip" data-skip-key="${esc(n.skipKey)}">Skip</button>
       </div>
-    </div>
-  `).join('');
-  if (more > 0) html += `<div class="notif-more">+ ${more} more notification${more>1?'s':''} not shown (max ${NOTIF_MAX})</div>`;
+    </div>`).join('');
+  if (more > 0) html += `<div class="notif-more">+ ${more} more not shown</div>`;
   list.innerHTML = html;
 }
-
 function openNotifDrawer(){
   markAllNotifsSeen();
   renderNotifBadge();
@@ -1952,24 +1649,569 @@ function openNotifDrawer(){
   renderNotifList();
   openModal('modalNotifs');
 }
-
 function skipNotif(skipKey){
   const skipped = loadSkipped();
   skipped[skipKey] = Date.now();
   saveSkipped(skipped);
-  toast('⏭ Skipped');
-  renderNotifList();
-  renderNotifBanner();
-  renderNotifBadge();
+  toast('Skipped');
+  renderNotifList(); renderNotifBanner(); renderNotifBadge();
 }
 function resetAllSkips(){
   if (!confirm('Reset all skipped notifications?')) return;
   saveSkipped({});
-  toast('↺ Notifications reset');
-  renderNotifList();
-  renderNotifBanner();
-  renderNotifBadge();
+  toast('Notifications reset');
+  renderNotifList(); renderNotifBanner(); renderNotifBadge();
 }
+
+function getSummaryBillData(shopId){
+  const shop = getShop(shopId);
+  if (!shop) return null;
+  const allTx = shopTx(shopId).sort((a,b) => dtKey(a).localeCompare(dtKey(b)));
+  const payments = allTx.filter(t => t.type === 'payment');
+  const lastPayment = payments.length ? payments[payments.length - 1] : null;
+  let oldOutstanding = 0;
+  let newJobs = [];
+  if (lastPayment) {
+    const lastKey = dtKey(lastPayment);
+    allTx.forEach(t => {
+      if (dtKey(t) <= lastKey) {
+        oldOutstanding += (t.type === 'job' ? 1 : -1) * (Number(t.amount) || 0);
+      }
+    });
+    newJobs = allTx.filter(t => dtKey(t) > lastKey && t.type === 'job');
+  } else {
+    newJobs = allTx.filter(t => t.type === 'job');
+    oldOutstanding = 0;
+  }
+  const newJobsTotal = newJobs.reduce((s,t) => s + (Number(t.amount) || 0), 0);
+  const currentOutstanding = oldOutstanding + newJobsTotal;
+  return { shop, profile: state.profile, lastPayment, oldOutstanding, newJobs, newJobsTotal, currentOutstanding };
+}
+
+function getDetailedBillData(shopId, from, to){
+  const shop = getShop(shopId);
+  if (!shop) return null;
+  let txs = shopTx(shopId);
+  if (from) txs = txs.filter(t => (t.date||'') >= from);
+  if (to) txs = txs.filter(t => (t.date||'') <= to);
+  txs.sort((a,b) => dtKey(a).localeCompare(dtKey(b)));
+  const totalJobs = txs.filter(t => t.type === 'job').reduce((s,t) => s + (Number(t.amount)||0), 0);
+  const totalPay = txs.filter(t => t.type === 'payment').reduce((s,t) => s + (Number(t.amount)||0), 0);
+  return { shop, profile: state.profile, from, to, txs, totalJobs, totalPay, balance: totalJobs - totalPay };
+}
+
+function buildSummaryBillText(d){
+  const { shop, profile: p, lastPayment, oldOutstanding, newJobs, currentOutstanding } = d;
+  const L = [];
+  const line = '==========================================';
+  const dash = '------------------------------------------';
+  L.push('STATEMENT OF ACCOUNT');
+  L.push(line);
+  L.push('');
+  L.push('FROM');
+  L.push(p.businessName || 'Shop Ledger');
+  if (p.owner) L.push('Attn: ' + p.owner);
+  if (p.phone) L.push('Tel: ' + p.phone);
+  if (p.address) L.push(p.address);
+  if (p.businessEmail) L.push('Email: ' + p.businessEmail);
+  L.push('');
+  L.push('BILL TO');
+  L.push(shop.name);
+  if (shop.phone) L.push('Tel: ' + shop.phone);
+  if (shop.address) L.push(shop.address);
+  L.push('');
+  L.push('Date: ' + formatDateLong(todayStr()));
+  L.push(dash);
+  L.push('');
+  if (lastPayment && oldOutstanding > 0.01) {
+    L.push('PREVIOUS BALANCE');
+    L.push('  Balance after payment on ' + formatDate(lastPayment.date));
+    L.push('  Rs ' + fmt(oldOutstanding));
+    L.push('');
+  }
+  if (newJobs.length) {
+    L.push('NEW TRANSACTIONS SINCE LAST PAYMENT');
+    L.push(dash);
+    newJobs.forEach(t => {
+      L.push(formatDate(t.date) + '  (' + t.refNo + ')');
+      L.push('  ' + (t.description || 'Job'));
+      L.push('  Rs ' + fmt(t.amount));
+      L.push('');
+    });
+  } else {
+    L.push('No new transactions since the last payment.');
+    L.push('');
+  }
+  if (lastPayment) {
+    L.push(dash);
+    L.push('LAST PAYMENT');
+    L.push('  ' + formatDate(lastPayment.date) + ' - ' + (lastPayment.method || 'Payment'));
+    L.push('  Rs ' + fmt(lastPayment.amount));
+    L.push('');
+  }
+  L.push(line);
+  L.push('CURRENT OUTSTANDING');
+  L.push('  Rs ' + fmt(currentOutstanding));
+  L.push(line);
+  L.push('');
+  L.push('Thank you for your business.');
+  if (p.businessName || p.phone) L.push((p.businessName || '') + (p.phone ? ' | ' + p.phone : ''));
+  return L.join('\n');
+}
+
+function buildDetailedBillText(d){
+  const { shop, profile: p, from, to, txs, totalJobs, totalPay, balance } = d;
+  const L = [];
+  const line = '==========================================';
+  const dash = '------------------------------------------';
+  L.push('BILL OF PARTICULARS');
+  L.push(line);
+  L.push('');
+  L.push('FROM');
+  L.push(p.businessName || 'Shop Ledger');
+  if (p.owner) L.push('Attn: ' + p.owner);
+  if (p.phone) L.push('Tel: ' + p.phone);
+  if (p.address) L.push(p.address);
+  if (p.businessEmail) L.push('Email: ' + p.businessEmail);
+  L.push('');
+  L.push('BILL TO');
+  L.push(shop.name);
+  if (shop.phone) L.push('Tel: ' + shop.phone);
+  if (shop.address) L.push(shop.address);
+  L.push('');
+  L.push('Date: ' + formatDateLong(todayStr()));
+  if (from || to) {
+    L.push('Period: ' + (from ? formatDate(from) : 'Beginning') + ' to ' + (to ? formatDate(to) : 'Today'));
+  }
+  L.push(dash);
+  L.push('');
+  L.push('TRANSACTIONS (' + txs.length + ')');
+  L.push(dash);
+  L.push('');
+  if (!txs.length) {
+    L.push('  No transactions in this period.');
+  } else {
+    txs.forEach(t => {
+      const isJob = t.type === 'job';
+      L.push(formatDate(t.date) + (t.time ? ' ' + t.time : '') + '  (' + (t.refNo || '') + ')');
+      L.push('  ' + (isJob ? (t.description || 'Job') : (t.method || 'Payment')));
+      if (t.notes) L.push('  Note: ' + t.notes);
+      L.push('  ' + (isJob ? '+' : '-') + ' Rs ' + fmt(t.amount));
+      L.push('');
+    });
+  }
+  L.push(dash);
+  L.push('');
+  L.push('Total Jobs:      Rs ' + fmt(totalJobs));
+  L.push('Total Payments:  Rs ' + fmt(totalPay));
+  L.push(line);
+  L.push('BALANCE:  Rs ' + fmt(balance));
+  L.push(line);
+  L.push('');
+  L.push('Thank you for your business.');
+  return L.join('\n');
+}
+
+function buildBillText(){
+  const shopId = $('billShop').value;
+  if (!shopId) return '';
+  if (state.billMode === 'summary') {
+    const d = getSummaryBillData(shopId);
+    return d ? buildSummaryBillText(d) : '';
+  }
+  const d = getDetailedBillData(shopId, state.billFrom, state.billTo);
+  return d ? buildDetailedBillText(d) : '';
+}
+
+function buildSummaryBillHTML(d){
+  const { shop, profile: p, lastPayment, oldOutstanding, newJobs, currentOutstanding } = d;
+  const businessName = p.businessName || 'Shop Ledger';
+  let html = '<div class="invoice-wrapper"><div class="invoice-doc">';
+  html += '<div class="invoice-header">';
+  html += '<div>';
+  html += '<div class="invoice-title">Statement of Account</div>';
+  html += '<div class="invoice-subtitle">Account summary</div>';
+  html += '</div>';
+  html += '<div class="invoice-meta">';
+  html += '<div>Date: <strong>' + formatDateLong(todayStr()) + '</strong></div>';
+  html += '</div></div>';
+
+  html += '<div class="invoice-parties">';
+  html += '<div class="party-block"><div class="party-label">From</div>';
+  html += '<div class="party-name">' + esc(businessName) + '</div>';
+  if (p.owner) html += '<div class="party-line">' + esc(p.owner) + '</div>';
+  if (p.phone) html += '<div class="party-line">Tel: ' + esc(p.phone) + '</div>';
+  if (p.address) html += '<div class="party-line">' + esc(p.address) + '</div>';
+  if (p.businessEmail) html += '<div class="party-line">' + esc(p.businessEmail) + '</div>';
+  html += '</div>';
+  html += '<div class="party-block"><div class="party-label">Bill To</div>';
+  html += '<div class="party-name">' + esc(shop.name) + '</div>';
+  if (shop.phone) html += '<div class="party-line">Tel: ' + esc(shop.phone) + '</div>';
+  if (shop.address) html += '<div class="party-line">' + esc(shop.address) + '</div>';
+  html += '</div></div>';
+
+  if (lastPayment && oldOutstanding > 0.01) {
+    html += '<div class="invoice-prevbal">';
+    html += '<div class="lbl">Previous Balance<small>Balance after last payment on ' + formatDate(lastPayment.date) + '</small></div>';
+    html += '<div class="val">Rs ' + fmt(oldOutstanding) + '</div>';
+    html += '</div>';
+  }
+
+  html += '<div class="invoice-block">';
+  html += '<div class="invoice-block-title">Transactions Since Last Payment</div>';
+  if (newJobs.length) {
+    html += '<table class="invoice-table"><thead><tr>';
+    html += '<th>Date</th><th>Reference</th><th>Description</th><th class="r">Amount</th>';
+    html += '</tr></thead><tbody>';
+    newJobs.forEach(t => {
+      html += '<tr>';
+      html += '<td>' + formatDate(t.date) + '</td>';
+      html += '<td class="ref">' + esc(t.refNo || '') + '</td>';
+      html += '<td class="desc">' + esc(t.description || 'Job') +
+              (t.notes ? '<div class="notes">' + esc(t.notes) + '</div>' : '') + '</td>';
+      html += '<td class="r">Rs ' + fmt(t.amount) + '</td>';
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+  } else {
+    html += '<div style="padding:14px;color:#6b7280;font-size:11.5px;text-align:center;background:#f9fafb;border-radius:4px">No new transactions since the last payment.</div>';
+  }
+  html += '</div>';
+
+  if (lastPayment) {
+    html += '<div class="invoice-block">';
+    html += '<div class="invoice-block-title">Last Payment Reference</div>';
+    html += '<div class="invoice-payment-block">';
+    html += '<div class="pay-line">';
+    html += '<div>';
+    html += '<div class="pay-date">' + formatDate(lastPayment.date) + (lastPayment.time ? ' ' + lastPayment.time : '') + '</div>';
+    html += '<div class="pay-method">' + esc(lastPayment.method || 'Payment') + (lastPayment.refNo ? ' | ' + esc(lastPayment.refNo) : '') + '</div>';
+    html += '</div>';
+    html += '<div class="pay-amount">Rs ' + fmt(lastPayment.amount) + '</div>';
+    html += '</div></div></div>';
+  }
+
+  html += '<div class="invoice-total' + (currentOutstanding <= 0.01 ? ' tv-clear' : '') + '">';
+  html += '<div class="tl">Current Outstanding</div>';
+  html += '<div class="tv">Rs ' + fmt(currentOutstanding) + '</div>';
+  html += '</div>';
+
+  html += '<div class="invoice-footer">';
+  html += 'Thank you for your business.<br>';
+  html += '<strong>' + esc(businessName) + '</strong>';
+  if (p.phone) html += ' | ' + esc(p.phone);
+  html += '</div>';
+
+  html += '</div></div>';
+  return html;
+}
+
+function buildDetailedBillHTML(d){
+  const { shop, profile: p, from, to, txs, totalJobs, totalPay, balance } = d;
+  const businessName = p.businessName || 'Shop Ledger';
+  let html = '<div class="invoice-wrapper"><div class="invoice-doc">';
+  html += '<div class="invoice-header">';
+  html += '<div>';
+  html += '<div class="invoice-title">Bill of Particulars</div>';
+  html += '<div class="invoice-subtitle">Detailed transaction record</div>';
+  html += '</div>';
+  html += '<div class="invoice-meta">';
+  html += '<div>Date: <strong>' + formatDateLong(todayStr()) + '</strong></div>';
+  if (from || to) {
+    html += '<div>Period: <strong>' + (from ? formatDate(from) : 'Start') + ' &rarr; ' + (to ? formatDate(to) : 'Today') + '</strong></div>';
+  }
+  html += '</div></div>';
+
+  html += '<div class="invoice-parties">';
+  html += '<div class="party-block"><div class="party-label">From</div>';
+  html += '<div class="party-name">' + esc(businessName) + '</div>';
+  if (p.owner) html += '<div class="party-line">' + esc(p.owner) + '</div>';
+  if (p.phone) html += '<div class="party-line">Tel: ' + esc(p.phone) + '</div>';
+  if (p.address) html += '<div class="party-line">' + esc(p.address) + '</div>';
+  if (p.businessEmail) html += '<div class="party-line">' + esc(p.businessEmail) + '</div>';
+  html += '</div>';
+  html += '<div class="party-block"><div class="party-label">Bill To</div>';
+  html += '<div class="party-name">' + esc(shop.name) + '</div>';
+  if (shop.phone) html += '<div class="party-line">Tel: ' + esc(shop.phone) + '</div>';
+  if (shop.address) html += '<div class="party-line">' + esc(shop.address) + '</div>';
+  html += '</div></div>';
+
+  html += '<div class="invoice-block">';
+  html += '<div class="invoice-block-title">Transactions (' + txs.length + ')</div>';
+  if (!txs.length) {
+    html += '<div style="padding:14px;color:#6b7280;font-size:11.5px;text-align:center;background:#f9fafb;border-radius:4px">No transactions in this period.</div>';
+  } else {
+    html += '<table class="invoice-table"><thead><tr>';
+    html += '<th>Date</th><th>Reference</th><th>Description</th><th class="r">Amount</th>';
+    html += '</tr></thead><tbody>';
+    txs.forEach(t => {
+      const isJob = t.type === 'job';
+      const desc = isJob ? (t.description || 'Job') : (t.method || 'Payment');
+      html += '<tr>';
+      html += '<td>' + formatDate(t.date) + (t.time ? '<br><small style="color:#9ca3af">' + t.time + '</small>' : '') + '</td>';
+      html += '<td class="ref">' + esc(t.refNo || '') + '</td>';
+      html += '<td class="desc">' + esc(desc) + (t.notes ? '<div class="notes">' + esc(t.notes) + '</div>' : '') + '</td>';
+      html += '<td class="r" style="color:' + (isJob ? '#ca8a04' : '#15803d') + '">' + (isJob ? '+' : '&minus;') + 'Rs ' + fmt(t.amount) + '</td>';
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+  }
+  html += '</div>';
+
+  html += '<div style="margin-top:14px;font-size:11.5px;color:#4b5563">';
+  html += '<div style="display:flex;justify-content:space-between;padding:3px 0"><span>Total Jobs</span><strong style="color:#1a1f29">Rs ' + fmt(totalJobs) + '</strong></div>';
+  html += '<div style="display:flex;justify-content:space-between;padding:3px 0"><span>Total Payments</span><strong style="color:#15803d">Rs ' + fmt(totalPay) + '</strong></div>';
+  html += '</div>';
+
+  html += '<div class="invoice-total' + (balance <= 0.01 ? ' tv-clear' : '') + '">';
+  html += '<div class="tl">Balance</div>';
+  html += '<div class="tv">Rs ' + fmt(balance) + '</div>';
+  html += '</div>';
+
+  html += '<div class="invoice-footer">';
+  html += 'Thank you for your business.<br>';
+  html += '<strong>' + esc(businessName) + '</strong>';
+  if (p.phone) html += ' | ' + esc(p.phone);
+  html += '</div>';
+
+  html += '</div></div>';
+  return html;
+}
+
+function updateBillPreview(){
+  const id = $('billShop').value;
+  state.billShopId = id;
+  if (!id) {
+    $('billPreview').innerHTML = '<div class="invoice-empty">Select a shop to generate a bill</div>';
+    return;
+  }
+  if (state.billMode === 'summary') {
+    const d = getSummaryBillData(id);
+    $('billPreview').innerHTML = d ? buildSummaryBillHTML(d) : '<div class="invoice-empty">Shop not found</div>';
+  } else {
+    const d = getDetailedBillData(id, state.billFrom, state.billTo);
+    $('billPreview').innerHTML = d ? buildDetailedBillHTML(d) : '<div class="invoice-empty">Shop not found</div>';
+  }
+}
+
+/* ============================================================
+   PDF — FIXED: uses in-viewport invisible container
+   ============================================================ */
+async function prepareBillForPDF(){
+  const shopId = $('billShop').value;
+  if (!shopId) { toast('Select a shop first'); return null; }
+  const shop = getShop(shopId);
+  if (!shop) { toast('Shop not found'); return null; }
+
+  let invoiceHTML = '';
+  if (state.billMode === 'summary') {
+    const d = getSummaryBillData(shopId);
+    if (!d) return null;
+    invoiceHTML = buildSummaryBillHTML(d);
+  } else {
+    const d = getDetailedBillData(shopId, state.billFrom, state.billTo);
+    if (!d) return null;
+    invoiceHTML = buildDetailedBillHTML(d);
+  }
+
+  const existing = document.getElementById('pdfRenderTarget');
+  if (existing) existing.remove();
+
+  // html2pdf CLONES the element (including its inline style) into its own overlay.
+  // If the element itself is positioned off-screen (left:-10000px) the clone is
+  // off-screen too and the PDF comes out blank. So: the off-screen positioning
+  // lives on a separate "holder"; the element we pass to html2pdf has NO positioning.
+  const holder = document.createElement('div');
+  holder.id = 'pdfRenderTarget';
+  holder.style.cssText = 'position:absolute;top:0;left:-10000px;width:794px;pointer-events:none;';
+
+  const container = document.createElement('div');
+  container.id = 'pdfContent';
+  container.style.cssText = [
+    'width:794px',
+    'background:#ffffff',
+    'color:#1a1f29',
+    'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif'
+  ].join(';');
+
+  const styleOverride = `
+    <style>
+      #pdfContent .invoice-wrapper{border-radius:0 !important;box-shadow:none !important;background:#ffffff !important;opacity:1 !important;visibility:visible !important}
+      #pdfContent .invoice-doc{padding:8px 40px 20px !important;font-size:12.5px !important;line-height:1.5 !important}
+      #pdfContent .invoice-title{font-size:22px !important}
+      #pdfContent .invoice-parties{grid-template-columns:1fr 1fr !important;gap:20px !important;display:grid !important}
+      #pdfContent .invoice-table{width:100% !important;border-collapse:collapse !important}
+      #pdfContent .invoice-table thead th{padding:7px 6px !important}
+      #pdfContent .invoice-table tbody td{padding:9px 6px !important}
+      #pdfContent .party-block .party-label{font-size:9.5px !important}
+      #pdfContent .party-name{font-size:13px !important}
+    </style>
+  `;
+
+  container.innerHTML = styleOverride + invoiceHTML;
+  holder.appendChild(container);
+  document.body.appendChild(holder);
+
+  await new Promise(r => requestAnimationFrame(() => setTimeout(r, 450)));
+
+  if (!container.offsetHeight || container.offsetHeight < 50) {
+    console.error('PDF container has no height');
+    holder.remove();
+    toast('Failed to render bill — try again');
+    return null;
+  }
+
+  const safeName = (shop.name || 'bill').replace(/[^a-z0-9]/gi, '-').toLowerCase();
+  const suffix = state.billMode === 'summary' ? 'summary' : 'details';
+  const filename = `${safeName}-${suffix}-${todayStr()}.pdf`;
+
+  // Full rendered size of the bill (so nothing is cut off at the viewport edge)
+  const fullW = 794;
+  const fullH = Math.ceil(container.scrollHeight) + 40;
+  const scale = fullH > 5000 ? 1.5 : 2;   // keep canvas within mobile memory limits
+
+  const opt = {
+    margin: [12, 0, 14, 0],               // top, left, bottom, right (mm) -> clean A4 margins on every page
+    filename,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: {
+      scale,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+      width: fullW,
+      windowWidth: fullW,
+      height: fullH - 40,
+      windowHeight: fullH + 400,          // tall virtual window -> content is never clipped
+      x: 0, y: 0,
+      scrollX: 0,
+      scrollY: 0
+    },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
+    pagebreak: {
+      mode: ['css', 'legacy'],
+      avoid: ['.invoice-table tr', '.invoice-block-title', '.party-block', '.invoice-prevbal',
+              '.invoice-payment-block', '.invoice-total', '.invoice-footer']
+    }
+  };
+
+  return { opt, filename, shop, container, holder };
+}
+
+async function downloadBillPDF(){
+  const result = await prepareBillForPDF();
+  if (!result) return;
+  toast('Generating PDF...');
+  try {
+    await html2pdf().set(result.opt).from(result.container).save();
+    toast('PDF downloaded');
+  } catch(err) {
+    console.error('PDF generation error:', err);
+    toast('Failed: ' + (err?.message || 'unknown error'));
+  } finally {
+    if (result.holder) result.holder.remove();
+  }
+}
+
+async function shareBillPDF(){
+  const result = await prepareBillForPDF();
+  if (!result) return;
+  toast('Preparing PDF...');
+  try {
+    const blob = await html2pdf().set(result.opt).from(result.container).outputPdf('blob');
+    const file = new File([blob], result.filename, { type: 'application/pdf' });
+    const shop = result.shop;
+    const caption = `Bill — ${shop.name}\n${formatDateLong(todayStr())}`;
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        title: `Bill — ${shop.name}`,
+        text: caption
+      });
+      toast('Shared');
+    } else {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = result.filename;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast('Sharing not supported — PDF downloaded');
+    }
+  } catch(err) {
+    if (err && err.name === 'AbortError') return;
+    console.error('Share error:', err);
+    toast('Failed to share PDF');
+  } finally {
+    if (result.holder) result.holder.remove();
+  }
+}
+
+$('downloadPdfBtn').addEventListener('click', downloadBillPDF);
+$('shareBtn').addEventListener('click', shareBillPDF);
+
+$('billModeToggle').addEventListener('click', e => {
+  const b = e.target.closest('.mode-btn'); if (!b) return;
+  state.billMode = b.dataset.billMode;
+  document.querySelectorAll('#billModeToggle .mode-btn').forEach(x =>
+    x.classList.toggle('active', x === b));
+  $('billDateControls').classList.toggle('hidden', state.billMode !== 'detailed');
+  updateBillPreview();
+});
+
+function applyBillRange(range){
+  state.billRange = range;
+  const now = new Date();
+  let from = new Date(), to = new Date();
+  if (range === 'today') { from = to = now; }
+  else if (range === 'week') {
+    const day = now.getDay();
+    const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+    from = new Date(now.getFullYear(), now.getMonth(), diff); to = now;
+  } else if (range === 'month') {
+    from = new Date(now.getFullYear(), now.getMonth(), 1); to = now;
+  } else if (range === 'year') {
+    from = new Date(now.getFullYear(), 0, 1); to = now;
+  } else { from = null; to = null; }
+  const fromStr = from ? localDateStr(from) : '';
+  const toStr = to ? localDateStr(to) : '';
+  $('billFrom').value = fromStr;
+  $('billTo').value   = toStr;
+  state.billFrom = fromStr;
+  state.billTo   = toStr;
+  document.querySelectorAll('#viewBills .chip[data-bill-range]').forEach(c =>
+    c.classList.toggle('active', c.dataset.billRange === range));
+  updateBillPreview();
+}
+document.querySelectorAll('#viewBills .chip[data-bill-range]').forEach(c => {
+  c.addEventListener('click', () => applyBillRange(c.dataset.billRange));
+});
+$('billFrom').addEventListener('change', e => { state.billFrom = e.target.value; state.billRange='custom'; updateBillPreview(); });
+$('billTo').addEventListener('change', e => { state.billTo = e.target.value; state.billRange='custom'; updateBillPreview(); });
+$('billShop').addEventListener('change', () => { state.billShopId = $('billShop').value; updateBillPreview(); });
+
+$('copyBillBtn').addEventListener('click', async () => {
+  const text = buildBillText();
+  if (!text) { toast('Select a shop first'); return; }
+  try { await navigator.clipboard.writeText(text); toast('Copied to clipboard'); }
+  catch(e) {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); ta.remove(); toast('Copied');
+  }
+});
+
+$('whatsappBillBtn').addEventListener('click', () => {
+  const id = $('billShop').value;
+  if (!id) { toast('Select a shop first'); return; }
+  const shop = getShop(id);
+  const text = buildBillText();
+  let phone = (shop.phone || '').replace(/\D/g, '');
+  if (phone.startsWith('0')) phone = '94' + phone.slice(1);
+  if (!phone) { toast('This shop has no phone number'); return; }
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+});
 
 function sendBillWhatsApp(shopId){
   const shop = getShop(shopId);
@@ -1977,11 +2219,12 @@ function sendBillWhatsApp(shopId){
   let phone = (shop.phone || '').replace(/\D/g, '');
   if (phone.startsWith('0')) phone = '94' + phone.slice(1);
   if (!phone) { toast('This shop has no phone number'); return; }
-  const text = buildBillText(shopId, null, null);
+  const d = getSummaryBillData(shopId);
+  if (!d) { toast('No data'); return; }
+  const text = buildSummaryBillText(d);
   window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
 }
 
-/* ================= RENDER ================= */
 function renderAll(){
   if (!state.user) return;
   renderDashboardStats();
@@ -2014,8 +2257,6 @@ function renderDashboardStats(){
   $('statPaidMonth').textContent = 'Rs ' + fmt(paidMonth);
   $('statShops').textContent = state.shops.length;
 }
-
-/* ---- Shop list rendering with sorting ---- */
 function sortShops(list, mode){
   const arr = [...list];
   if (mode === 'az') arr.sort((a,b) => (a.name||'').localeCompare(b.name||''));
@@ -2039,10 +2280,8 @@ function renderShopList(listId, countId, q){
   items = sortShops(items, state.shopSort);
   if (countId && $(countId)) $(countId).textContent = items.length + ' shops';
   if (!items.length) {
-    list.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="ico">🏪</div>
-      <p>${state.shops.length === 0
-        ? 'No shops yet.<br>Tap <b>+</b> to add your first shop.'
-        : 'No shops match your search.'}</p></div>`;
+    list.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="ico">▤</div>
+      <p>${state.shops.length === 0 ? 'No shops yet. Tap + to add your first shop.' : 'No shops match your search.'}</p></div>`;
     return;
   }
   list.innerHTML = items.map(s => shopCardHTML(s)).join('');
@@ -2057,10 +2296,8 @@ function renderShopList2(){
   items = sortShops(items, state.shopSort);
   $('shopCountLabel2').textContent = items.length + ' shops';
   if (!items.length) {
-    list.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="ico">🏪</div>
-      <p>${state.shops.length === 0
-        ? 'No shops yet.<br>Tap <b>+</b> to add your first shop.'
-        : 'No shops match your search.'}</p></div>`;
+    list.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="ico">▤</div>
+      <p>${state.shops.length === 0 ? 'No shops yet. Tap + to add your first shop.' : 'No shops match your search.'}</p></div>`;
     return;
   }
   list.innerHTML = items.map(s => shopCardHTML(s)).join('');
@@ -2068,8 +2305,8 @@ function renderShopList2(){
 function shopCardHTML(s){
   const b = shopBalance(s.id);
   const meta = [
-    s.phone ? '📞 '+esc(s.phone) : '',
-    s.dueDays ? '⏱ '+s.dueDays+' days' : ''
+    s.phone ? 'Tel: '+esc(s.phone) : '',
+    s.dueDays ? s.dueDays+' days due' : ''
   ].filter(Boolean).join(' • ');
   return `<div class="shop-item" data-shop-id="${s.id}">
     <div class="shop-avatar">${esc((s.name||'S').charAt(0).toUpperCase())}</div>
@@ -2082,8 +2319,6 @@ function shopCardHTML(s){
     </div>
   </div>`;
 }
-
-/* ---- Top outstanding shops (5) ---- */
 function renderTopOutstanding(){
   const list = $('topOutstanding'); if (!list) return;
   const ranked = state.shops
@@ -2093,8 +2328,8 @@ function renderTopOutstanding(){
     .slice(0, 5);
   $('topOutCount').textContent = ranked.length + ' shops';
   if (!ranked.length) {
-    list.innerHTML = `<div class="empty small" style="grid-column:1/-1"><div class="ico">🎉</div>
-      <p>No outstanding balances. All shops are clear!</p></div>`;
+    list.innerHTML = `<div class="empty small" style="grid-column:1/-1"><div class="ico">✓</div>
+      <p>No outstanding balances. All shops are clear.</p></div>`;
     return;
   }
   list.innerHTML = ranked.map((x, i) => {
@@ -2103,34 +2338,27 @@ function renderTopOutstanding(){
       <div class="shop-rank">${i+1}</div>
       <div class="shop-info">
         <div class="shop-name">${esc(s.name)}</div>
-        <div class="shop-meta">${s.phone ? '📞 '+esc(s.phone) : ''}${s.dueDays ? (s.phone?' • ':'')+'⏱ '+s.dueDays+' days' : ''}</div>
+        <div class="shop-meta">${s.phone ? 'Tel: '+esc(s.phone) : ''}${s.dueDays ? (s.phone?' • ':'')+s.dueDays+' days due' : ''}</div>
       </div>
-      <div class="shop-bal c-amber">
-        Rs ${fmt(x.bal)}<small>OUTSTANDING</small>
-      </div>
+      <div class="shop-bal c-amber">Rs ${fmt(x.bal)}<small>OUTSTANDING</small></div>
     </div>`;
   }).join('');
 }
-
-/* ---- Recent payments (3) ---- */
 function renderRecentPayments(){
   const list = $('recentPay'); if (!list) return;
   const recent = state.txs.filter(t => t.type === 'payment').slice(0, 3);
   $('recentPayCount').textContent = recent.length + ' payments';
   if (!recent.length) {
-    list.innerHTML = `<div class="empty small" style="grid-column:1/-1"><div class="ico">💰</div>
-      <p>No payments recorded yet.</p></div>`;
+    list.innerHTML = `<div class="empty small" style="grid-column:1/-1"><div class="ico">₹</div><p>No payments recorded yet.</p></div>`;
     return;
   }
   list.innerHTML = recent.map(t => txCardHTML(t, true)).join('');
 }
-
-/* ---- Recent transactions (3) ---- */
 function renderRecentTx(){
   const list = $('recentTx');
   const recent = state.txs.slice(0, 3);
   if (!recent.length) {
-    list.innerHTML = `<div class="empty small" style="padding:26px 10px;grid-column:1/-1"><div class="ico">📋</div><p>No transactions yet.</p></div>`;
+    list.innerHTML = `<div class="empty small" style="padding:26px 10px;grid-column:1/-1"><div class="ico">▤</div><p>No transactions yet.</p></div>`;
     return;
   }
   list.innerHTML = recent.map(t => txCardHTML(t, true)).join('');
@@ -2140,8 +2368,8 @@ function txCardHTML(t, showShop){
   const shopName = shop ? shop.name : 'Deleted Shop';
   const isJob = t.type === 'job';
   const title = isJob ? (t.description || 'Job') : (t.method || 'Payment');
-  return `<div class="tx" data-tx-id="${t.id}" ${showShop?`data-shop-open="${t.shopId}"`:''} style="cursor:pointer">
-    <div class="tx-icon ${isJob?'job':'payment'}">${isJob?'🔧':'💰'}</div>
+  return `<div class="tx" data-tx-id="${t.id}" ${showShop?`data-shop-open="${t.shopId}"`:''}>
+    <div class="tx-icon ${isJob?'job':'payment'}">${isJob?'J':'P'}</div>
     <div class="tx-main">
       ${showShop?`<div class="tx-title">${esc(shopName)}</div><div class="tx-ref">${esc(t.refNo)}</div>`:''}
       ${!showShop?`<div class="tx-title">${esc(title)}</div><div class="tx-ref">${esc(t.refNo)}</div>`:''}
@@ -2152,13 +2380,18 @@ function txCardHTML(t, showShop){
   </div>`;
 }
 
-/* ================= CHART ================= */
 let mainChart, shopChart;
+function isLightMode(){ return document.body.classList.contains('light'); }
+function chartColors(){
+  const light = isLightMode();
+  return {
+    text: light ? '#57606a' : '#8b949e',
+    grid: light ? 'rgba(0,0,0,.07)' : 'rgba(255,255,255,.06)'
+  };
+}
 function buildChartData(range, txs){
   const now = new Date();
   const labels = [], buckets = [];
-  const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-
   if (range === 'daily') {
     for (let i = 29; i >= 0; i--) {
       const d = new Date(now); d.setDate(d.getDate() - i);
@@ -2167,10 +2400,8 @@ function buildChartData(range, txs){
     }
   } else if (range === 'weekly') {
     for (let i = 11; i >= 0; i--) {
-      const start = new Date(now);
-      start.setDate(now.getDate() - (i*7 + 6));
-      const end = new Date(now);
-      end.setDate(now.getDate() - (i*7));
+      const start = new Date(now); start.setDate(now.getDate() - (i*7 + 6));
+      const end = new Date(now); end.setDate(now.getDate() - (i*7));
       labels.push(`W${12-i}`);
       buckets.push({ start: localDateStr(start), end: localDateStr(end), jobs: 0, payments: 0 });
     }
@@ -2187,7 +2418,6 @@ function buildChartData(range, txs){
       buckets.push({ year: y, jobs: 0, payments: 0 });
     }
   }
-
   txs.forEach(t => {
     const amt = Number(t.amount)||0;
     const dstr = t.date || '';
@@ -2208,15 +2438,16 @@ function buildChartData(range, txs){
   return { labels, buckets };
 }
 function chartCommonOptions(){
+  const c = chartColors();
   return {
     responsive: true, maintainAspectRatio: false,
     plugins: {
-      legend: { labels: { color: '#8b93a7', font: { size: 11 }, boxWidth: 12, boxHeight: 8 } },
+      legend: { labels: { color: c.text, font: { size: 11 }, boxWidth: 12, boxHeight: 8 } },
       tooltip: { callbacks: { label: c => `${c.dataset.label}: Rs ${fmt(c.parsed.y)}` } }
     },
     scales: {
-      x: { ticks: { color: '#8b93a7', font: { size: 10 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 }, grid: { color: 'rgba(37,43,59,.3)', drawBorder: false } },
-      y: { ticks: { color: '#8b93a7', font: { size: 10 }, callback: v => 'Rs ' + fmt(v) }, grid: { color: 'rgba(37,43,59,.3)', drawBorder: false } }
+      x: { ticks: { color: c.text, font: { size: 10 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 }, grid: { color: c.grid, drawBorder: false } },
+      y: { ticks: { color: c.text, font: { size: 10 }, callback: v => 'Rs ' + fmt(v) }, grid: { color: c.grid, drawBorder: false } }
     }
   };
 }
@@ -2237,17 +2468,25 @@ function renderMainChart(){
     data: {
       labels,
       datasets: [
-        { label: 'Jobs', data: jobsData, borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,.08)', tension: .35, borderWidth: 2, pointRadius: 1.5, fill: true },
-        { label: 'Payments', data: payData, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,.08)', tension: .35, borderWidth: 2, pointRadius: 1.5, fill: true },
-        { label: 'Balance', data: balData, borderColor: '#8b5cf6', borderDash: [5,5], backgroundColor: 'transparent', tension: .35, borderWidth: 2, pointRadius: 0 }
+        { label: 'Jobs', data: jobsData, borderColor: '#eab308', backgroundColor: 'rgba(234,179,8,.08)', tension: .35, borderWidth: 2, pointRadius: 1.5, fill: true },
+        { label: 'Payments', data: payData, borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,.08)', tension: .35, borderWidth: 2, pointRadius: 1.5, fill: true },
+        { label: 'Balance', data: balData, borderColor: '#3b82f6', borderDash: [5,5], backgroundColor: 'transparent', tension: .35, borderWidth: 2, pointRadius: 0 }
       ]
     },
     options: chartCommonOptions()
   });
 }
 
-/* ================= SHOP DETAIL ================= */
+function getCurrentView(){
+  if ($('viewHome').classList.contains('active')) return 'home';
+  if ($('viewShops').classList.contains('active')) return 'shops';
+  if ($('viewBills').classList.contains('active')) return 'bills';
+  if ($('viewSettings').classList.contains('active')) return 'settings';
+  return 'home';
+}
 function openShop(shopId){
+  const cur = getCurrentView();
+  if (cur && cur !== 'shopDetail') state.previousView = cur;
   state.currentShopId = shopId;
   state.txFilter = 'all'; state.txSearch = '';
   $('txSearch').value = '';
@@ -2255,10 +2494,11 @@ function openShop(shopId){
   switchView('shopDetail');
   renderShopDetail();
   window.scrollTo(0,0);
+  try { history.pushState({ __shop: shopId }, ''); } catch(e) {}
 }
 function closeShop(){
   state.currentShopId = null;
-  switchView('home');
+  switchView(state.previousView || 'home');
   if (shopChart) { shopChart.destroy(); shopChart = null; }
 }
 function renderShopDetail(){
@@ -2268,38 +2508,34 @@ function renderShopDetail(){
   $('detailName').textContent = shop.name || '';
   $('detailAvatar').textContent = (shop.name||'S').charAt(0).toUpperCase();
   $('detailMeta').textContent = [
-    shop.phone ? '📞 '+shop.phone : '',
-    shop.address ? '📍 '+shop.address : ''
+    shop.phone ? 'Tel: '+shop.phone : '',
+    shop.address ? shop.address : ''
   ].filter(Boolean).join(' • ') || '—';
-
   const tot = shopTotals(shop.id);
   $('detailBal').textContent = 'Rs ' + fmt(tot.balance);
   $('detailBal').className = 'stat-value ' + (tot.balance > 0 ? 'c-amber' : (tot.balance < 0 ? 'c-green' : ''));
   $('detailJobTotal').textContent = 'Rs ' + fmt(tot.job);
   $('detailPayTotal').textContent = 'Rs ' + fmt(tot.pay);
-
-  // Due info
   const dueInfoEl = $('detailDueInfo');
   const dueDays = Math.max(0, Math.floor(Number(shop.dueDays) || 0));
   const latestJob = latestJobOf(shop.id);
   if (!dueDays) {
-    dueInfoEl.innerHTML = '⏱ <b>Due Days = 0</b> — notifications off. Edit shop and set due days to enable reminders.';
+    dueInfoEl.innerHTML = '<b>Due Days = 0</b> &mdash; reminders disabled. Edit the shop to enable.';
   } else if (!latestJob) {
-    dueInfoEl.innerHTML = `⏱ <b>Due Days: ${dueDays}</b><br>No job yet — reminders start when you add a job.`;
+    dueInfoEl.innerHTML = `<b>Due Days: ${dueDays}</b><br>No job yet &mdash; reminders start when you add a job.`;
   } else {
     const dueDateStr = addDays(latestJob.date, dueDays);
     const today = todayStr();
     const diff = daysBetween(today, dueDateStr);
     let statusLine = '';
-    if (diff > 0) statusLine = `<span style="color:#6ee7b7">⏳ Due in ${diff} day${diff===1?'':'s'}</span>`;
-    else if (diff === 0) statusLine = `<span style="color:#fcd34d">📅 Due today</span>`;
-    else statusLine = `<span style="color:#fca5a5">⚠️ Overdue by ${Math.abs(diff)} day${Math.abs(diff)===1?'':'s'}</span>`;
-    dueInfoEl.innerHTML = `⏱ <b>Due Days: ${dueDays}</b> after each job<br>
-      🔧 Last job: ${formatDate(latestJob.date)}<br>
-      📅 Due date: <b>${formatDate(dueDateStr)}</b><br>
+    if (diff > 0) statusLine = `<span style="color:#4ade80">Due in ${diff} day${diff===1?'':'s'}</span>`;
+    else if (diff === 0) statusLine = `<span style="color:#facc15">Due today</span>`;
+    else statusLine = `<span style="color:#f87171">Overdue by ${Math.abs(diff)} day${Math.abs(diff)===1?'':'s'}</span>`;
+    dueInfoEl.innerHTML = `<b>Due Days: ${dueDays}</b> after each job<br>
+      Last job: ${formatDate(latestJob.date)}<br>
+      Due date: <b>${formatDate(dueDateStr)}</b><br>
       ${statusLine}`;
   }
-
   renderShopTx();
   renderShopChart();
 }
@@ -2317,7 +2553,7 @@ function renderShopTx(){
   $('detailTxCount').textContent = items.length + ' items';
   const list = $('detailTx');
   if (!items.length) {
-    list.innerHTML = `<div class="empty" style="padding:26px 10px"><div class="ico">📋</div><p>No transactions yet.</p></div>`;
+    list.innerHTML = `<div class="empty" style="padding:26px 10px"><div class="ico">▤</div><p>No transactions yet.</p></div>`;
     return;
   }
   list.innerHTML = items.map(t => txCardHTML(t, false)).join('');
@@ -2335,15 +2571,14 @@ function renderShopChart(){
     data: {
       labels,
       datasets: [
-        { label: 'Jobs', data: jobData, borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,.1)', tension: .35, borderWidth: 2, pointRadius: 1.5, fill: true },
-        { label: 'Payments', data: payData, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,.1)', tension: .35, borderWidth: 2, pointRadius: 1.5, fill: true }
+        { label: 'Jobs', data: jobData, borderColor: '#eab308', backgroundColor: 'rgba(234,179,8,.1)', tension: .35, borderWidth: 2, pointRadius: 1.5, fill: true },
+        { label: 'Payments', data: payData, borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,.1)', tension: .35, borderWidth: 2, pointRadius: 1.5, fill: true }
       ]
     },
     options: chartCommonOptions()
   });
 }
 
-/* ================= VIEWS ================= */
 function switchView(view){
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   if (view === 'shopDetail') {
@@ -2368,15 +2603,10 @@ document.querySelector('.sb-nav').addEventListener('click', e => {
   switchView(b.dataset.view);
 });
 
-/* ================= MODAL HELPERS ================= */
 function openModal(id){ $(id).classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
 function closeModal(id){ $(id).classList.add('hidden'); document.body.style.overflow = ''; }
-document.querySelectorAll('[data-close]').forEach(b => {
-  b.addEventListener('click', () => closeModal(b.dataset.close));
-});
-document.querySelectorAll('.modal-backdrop').forEach(m => {
-  m.addEventListener('click', e => { if (e.target === m) closeModal(m.id); });
-});
+document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => closeModal(b.dataset.close)));
+document.querySelectorAll('.modal-backdrop').forEach(m => m.addEventListener('click', e => { if (e.target === m) closeModal(m.id); }));
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') document.querySelectorAll('.modal-backdrop:not(.hidden)').forEach(m => closeModal(m.id));
 });
@@ -2393,7 +2623,6 @@ document.querySelectorAll('form[data-form-nav]').forEach(form => {
   });
 });
 
-/* ================= ACTION SHEET ================= */
 function openSheet(){ $('sheetBackdrop').classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
 function closeSheet(){ $('sheetBackdrop').classList.add('hidden'); document.body.style.overflow = ''; }
 $('fabBtn').addEventListener('click', openSheet);
@@ -2411,9 +2640,46 @@ $('sheetBackdrop').addEventListener('click', e => {
   }, 220);
 });
 
-/* ================= SHOP MODAL ================= */
+/* ---- Duplicate shop checks ---- */
+function normPhone(p){
+  let d = String(p || '').replace(/\D/g, '');
+  if (d.startsWith('0094')) d = d.slice(2);
+  if (d.startsWith('94') && d.length >= 11) d = d.slice(2);
+  if (d.startsWith('0')) d = d.slice(1);
+  return d;
+}
+function findShopByPhone(phone, excludeId){
+  const n = normPhone(phone);
+  if (!n) return null;
+  return state.shops.find(s => s.id !== excludeId && normPhone(s.phone) === n) || null;
+}
+function findShopByName(name, excludeId){
+  const n = String(name || '').trim().toLowerCase();
+  if (!n) return null;
+  return state.shops.find(s => s.id !== excludeId && String(s.name || '').trim().toLowerCase() === n) || null;
+}
+function showPhoneDup(dup){
+  const el = $('sPhoneWarn'); if (!el) return;
+  if (!dup) { el.classList.add('hidden'); el.innerHTML = ''; el.dataset.shopId = ''; return; }
+  el.dataset.shopId = dup.id;
+  el.innerHTML = `This phone number is already added to <b>${esc(dup.name)}</b>. The same number cannot be used for two shops. ` +
+    `<button type="button" class="btn-ghost" data-open-dup style="padding:5px 10px;margin-top:6px;font-size:12px">Open that shop</button>`;
+  el.classList.remove('hidden');
+}
+$('sPhone').addEventListener('input', () => {
+  showPhoneDup(findShopByPhone($('sPhone').value, $('shopId').value));
+});
+$('sPhoneWarn').addEventListener('click', e => {
+  if (!e.target.closest('[data-open-dup]')) return;
+  const sid = $('sPhoneWarn').dataset.shopId;
+  if (!sid) return;
+  closeModal('modalShop');
+  setTimeout(() => openShop(sid), 200);
+});
+
 function openShopModal(shop = null){
   $('shopForm').reset();
+  showPhoneDup(null);
   $('shopId').value = '';
   $('sDueDays').value = '';
   $('deleteShopBtn').classList.add('hidden');
@@ -2441,14 +2707,32 @@ $('shopForm').addEventListener('submit', async (e) => {
     notes: $('sNotes').value.trim(),
     updatedAt: Date.now()
   };
+  // Same phone number cannot belong to two shops
+  const dupPhone = findShopByPhone(data.phone, id);
+  if (dupPhone) {
+    showPhoneDup(dupPhone);
+    toast('Already added: ' + dupPhone.name);
+    $('sPhone').focus();
+    return;
+  }
+  // Same shop name already exists -> show it and ask before adding
+  const prevName = id ? (getShop(id)?.name || '') : '';
+  if (!id || data.name.toLowerCase() !== prevName.trim().toLowerCase()) {
+    const dupName = findShopByName(data.name, id);
+    if (dupName) {
+      const open = confirm('A shop named "' + dupName.name + '"' + (dupName.phone ? ' (' + dupName.phone + ')' : '') +
+        ' is already added.\n\nOK = open that shop\nCancel = save this as a separate shop anyway');
+      if (open) { closeModal('modalShop'); setTimeout(() => openShop(dupName.id), 200); return; }
+    }
+  }
   const btn = $('saveShopBtn');
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
   try {
-    if (id) { await updateDoc(doc(db, 'users', state.user.uid, 'shops', id), data); toast('✓ Shop updated'); }
+    if (id) { await updateDoc(doc(db, 'users', state.user.uid, 'shops', id), data); toast('Shop updated'); }
     else {
       data.createdAt = Date.now();
       const ref = await addDoc(collection(db, 'users', state.user.uid, 'shops'), data);
-      toast('✓ Shop added'); state.currentShopId = ref.id;
+      toast('Shop added'); state.currentShopId = ref.id;
     }
     closeModal('modalShop');
   } catch (err) { console.error(err); toast('Error saving shop'); }
@@ -2462,12 +2746,15 @@ $('deleteShopBtn').addEventListener('click', async () => {
     for (const t of txs) await deleteDoc(doc(db, 'users', state.user.uid, 'transactions', t.id));
     await deleteDoc(doc(db, 'users', state.user.uid, 'shops', id));
     closeModal('modalShop');
-    if (state.currentShopId === id) closeShop();
-    toast('🗑️ Shop deleted');
+    if (state.currentShopId === id) {
+      const wasInHistory = window.history.state && window.history.state.__shop;
+      closeShop();
+      if (wasInHistory) { try { history.replaceState({}, '', location.href); } catch(e) {} }
+    }
+    toast('Shop deleted');
   } catch (err) { console.error(err); toast('Error deleting'); }
 });
 
-/* ================= POPULATE SELECTS ================= */
 function populateShopSelects(){
   const opts = state.shops.map(s =>
     `<option value="${s.id}">${esc(s.name)}${s.phone?' — '+esc(s.phone):''}</option>`
@@ -2481,7 +2768,6 @@ function populateShopSelects(){
   });
 }
 
-/* ================= JOB / PAYMENT ================= */
 function openJobModal(preselectShopId = null){
   if (!state.shops.length) { toast('Add a shop first'); return; }
   $('jobForm').reset(); populateShopSelects();
@@ -2510,10 +2796,8 @@ $('jobForm').addEventListener('submit', async (e) => {
     const dueDays = Math.max(0, Math.floor(Number(shop?.dueDays) || 0));
     if (dueDays) {
       const dueDate = addDays(data.date, dueDays);
-      toast(`✓ Job added — Due on ${formatDate(dueDate)}`);
-    } else {
-      toast('✓ Job added — ' + data.refNo);
-    }
+      toast(`Job added. Due on ${formatDate(dueDate)}`);
+    } else toast('Job added.');
     closeModal('modalJob');
   } catch (err) { console.error(err); toast('Error saving'); }
   finally { btn.disabled = false; btn.textContent = 'Save Job'; }
@@ -2543,133 +2827,12 @@ $('payForm').addEventListener('submit', async (e) => {
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Saving...';
   try {
     await addDoc(collection(db, 'users', state.user.uid, 'transactions'), data);
-    toast('✓ Payment added — ' + data.refNo);
+    toast('Payment added.');
     closeModal('modalPay');
   } catch (err) { console.error(err); toast('Error saving'); }
   finally { btn.disabled = false; btn.textContent = 'Save Payment'; }
 });
 
-/* ================= BILL ================= */
-function applyBillRange(range){
-  state.billRange = range;
-  const now = new Date();
-  let from = new Date(), to = new Date();
-  if (range === 'today') { from = to = now; }
-  else if (range === 'week') {
-    const day = now.getDay();
-    const diff = now.getDate() - day + (day === 0 ? -6 : 1);
-    from = new Date(now.getFullYear(), now.getMonth(), diff); to = now;
-  } else if (range === 'month') {
-    from = new Date(now.getFullYear(), now.getMonth(), 1); to = now;
-  } else if (range === 'year') {
-    from = new Date(now.getFullYear(), 0, 1); to = now;
-  } else { from = null; to = null; }
-  const fromStr = from ? localDateStr(from) : '';
-  const toStr = to ? localDateStr(to) : '';
-  $('billFrom').value = fromStr;
-  $('billTo').value   = toStr;
-  state.billFrom = fromStr;
-  state.billTo   = toStr;
-  document.querySelectorAll('#viewBills .chip[data-bill-range]').forEach(c =>
-    c.classList.toggle('active', c.dataset.billRange === range));
-  updateBillPreview();
-}
-document.querySelectorAll('#viewBills .chip[data-bill-range]').forEach(c => {
-  c.addEventListener('click', () => applyBillRange(c.dataset.billRange));
-});
-$('billFrom').addEventListener('change', e => { state.billFrom = e.target.value; state.billRange='custom'; updateBillPreview(); });
-$('billTo').addEventListener('change', e => { state.billTo = e.target.value; state.billRange='custom'; updateBillPreview(); });
-$('billShop').addEventListener('change', () => {
-  state.billShopId = $('billShop').value; updateBillPreview();
-});
-
-function buildBillText(shopId, from, to){
-  const shop = getShop(shopId); if (!shop) return '';
-  const p = state.profile || {};
-  let txs = shopTx(shopId);
-  if (from) txs = txs.filter(t => (t.date||'') >= from);
-  if (to) txs = txs.filter(t => (t.date||'') <= to);
-  let job = 0, pay = 0;
-  txs.forEach(t => { if (t.type === 'job') job += Number(t.amount)||0; else pay += Number(t.amount)||0; });
-  const balance = job - pay;
-  const lines = [];
-  lines.push('═══════════════════════════════');
-  lines.push('          ' + (p.businessName || 'SHOP LEDGER'));
-  lines.push('═══════════════════════════════');
-  if (p.owner) lines.push('Owner: ' + p.owner);
-  if (p.phone) lines.push('Phone: ' + p.phone);
-  if (p.address) lines.push('Address: ' + p.address);
-  if (p.businessEmail) lines.push('Email: ' + p.businessEmail);
-  lines.push('');
-  lines.push('───────────────────────────────');
-  lines.push('BILL TO:');
-  lines.push('Shop: ' + shop.name);
-  if (shop.phone) lines.push('Phone: ' + shop.phone);
-  if (shop.address) lines.push('Address: ' + shop.address);
-  lines.push('───────────────────────────────');
-  lines.push('Generated: ' + formatDate(todayStr()) + ' ' + nowTime());
-  if (from || to) {
-    lines.push('Period: ' + (from ? formatDate(from) : 'Beginning') +
-               '  →  ' + (to ? formatDate(to) : 'Today'));
-  }
-  lines.push('───────────────────────────────');
-  lines.push('');
-  lines.push('SUMMARY:');
-  lines.push('  Total Jobs:      Rs ' + fmt(job));
-  lines.push('  Total Paid:      Rs ' + fmt(pay));
-  lines.push('  Outstanding:     Rs ' + fmt(balance));
-  lines.push('───────────────────────────────');
-  lines.push('');
-  lines.push('TRANSACTIONS (' + txs.length + '):');
-  lines.push('');
-  if (!txs.length) lines.push('  (no transactions in this period)');
-  else {
-    const sorted = [...txs].sort((a,b) => ((a.date+a.time)||'').localeCompare((b.date+b.time)||''));
-    sorted.forEach(t => {
-      const sign = t.type === 'job' ? '+' : '-';
-      const label = t.type === 'job' ? (t.description || 'Job') : (t.method || 'Payment');
-      lines.push('  ' + t.refNo + '  [' + t.type.toUpperCase() + ']');
-      lines.push('    ' + formatDate(t.date) + ' ' + (t.time||'') + '  |  ' + label);
-      if (t.notes) lines.push('    Note: ' + t.notes);
-      lines.push('    ' + sign + ' Rs ' + fmt(t.amount));
-      lines.push('');
-    });
-  }
-  lines.push('═══════════════════════════════');
-  lines.push('Thank you for your business!');
-  lines.push('Powered by POS-LOOKMOBILE');
-  lines.push('═══════════════════════════════');
-  return lines.join('\n');
-}
-function updateBillPreview(){
-  const id = $('billShop').value;
-  state.billShopId = id;
-  if (!id) { $('billPreview').textContent = 'Select a shop to preview the bill...'; return; }
-  const from = state.billFrom || null, to = state.billTo || null;
-  $('billPreview').textContent = buildBillText(id, from, to);
-}
-$('copyBillBtn').addEventListener('click', async () => {
-  const text = $('billPreview').textContent;
-  if (!text || text.startsWith('Select a shop')) { toast('Select a shop first'); return; }
-  try { await navigator.clipboard.writeText(text); toast('📋 Copied to clipboard'); }
-  catch(e) {
-    const ta = document.createElement('textarea');
-    ta.value = text; document.body.appendChild(ta); ta.select();
-    document.execCommand('copy'); ta.remove(); toast('📋 Copied');
-  }
-});
-$('whatsappBillBtn').addEventListener('click', () => {
-  const id = $('billShop').value;
-  if (!id) { toast('Select a shop first'); return; }
-  const shop = getShop(id);
-  const text = buildBillText(id, state.billFrom, state.billTo);
-  let phone = (shop.phone || '').replace(/\D/g, '');
-  if (phone.startsWith('0')) phone = '94' + phone.slice(1);
-  if (!phone) { toast('This shop has no phone number'); return; }
-  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
-});
-
-/* ================= EVENTS ================= */
 $('shopList').addEventListener('click', e => {
   const item = e.target.closest('[data-shop-id]');
   if (item) openShop(item.dataset.shopId);
@@ -2705,12 +2868,9 @@ $('shopSearch').addEventListener('input', e => {
 });
 $('shopSearch2').addEventListener('input', e => {
   clearTimeout(shopSearchTimer);
-  shopSearchTimer = setTimeout(() => {
-    renderShopList2();
-  }, 150);
+  shopSearchTimer = setTimeout(() => renderShopList2(), 150);
 });
 
-/* ============ SEARCH CLEAR BUTTONS ============ */
 function wireSearchClear(inputEl, btnEl){
   if (!inputEl || !btnEl) return;
   const sync = () => btnEl.classList.toggle('hidden', !inputEl.value);
@@ -2728,7 +2888,6 @@ document.querySelectorAll('.search-clear').forEach(btn => {
   if (input) wireSearchClear(input, btn);
 });
 
-/* ---- Shop sort chips ---- */
 $('shopSort').addEventListener('click', e => {
   const c = e.target.closest('.chip'); if (!c) return;
   state.shopSort = c.dataset.sort;
@@ -2750,7 +2909,18 @@ $('shopChartRange').addEventListener('click', e => {
   document.querySelectorAll('#shopChartRange .rc').forEach(x => x.classList.toggle('active', x === b));
   renderShopChart();
 });
-$('backBtn').addEventListener('click', closeShop);
+
+$('backBtn').addEventListener('click', () => {
+  if (state.currentShopId) {
+    const hasHistory = window.history.state && window.history.state.__shop;
+    if (hasHistory) { try { history.back(); } catch(e) { closeShop(); } }
+    else closeShop();
+  } else closeShop();
+});
+window.addEventListener('popstate', () => {
+  if (state.currentShopId) closeShop();
+});
+
 $('editShopBtn').addEventListener('click', () => {
   const s = getShop(state.currentShopId); if (s) openShopModal(s);
 });
@@ -2774,7 +2944,6 @@ $('txSearch').addEventListener('input', e => {
   txSearchTimer = setTimeout(() => { state.txSearch = e.target.value; renderShopTx(); }, 150);
 });
 
-/* ================= NOTIFICATIONS ================= */
 $('notifBtn').addEventListener('click', openNotifDrawer);
 $('resetSkipsBtn').addEventListener('click', resetAllSkips);
 $('resetNotifsBtn').addEventListener('click', resetAllSkips);
@@ -2784,50 +2953,32 @@ $('notifList').addEventListener('click', e => {
   if (!btn) return;
   const action = btn.dataset.notifAction;
   const shopId = btn.dataset.shopId;
-
-  if (action === 'skip') {
-    skipNotif(btn.dataset.skipKey);
-  } else if (action === 'pay') {
-    closeModal('modalNotifs');
-    setTimeout(() => openPayModal(shopId), 220);
-  } else if (action === 'bill') {
-    closeModal('modalNotifs');
-    setTimeout(() => sendBillWhatsApp(shopId), 220);
-  } else if (action === 'view') {
-    closeModal('modalNotifs');
-    setTimeout(() => openShop(shopId), 220);
-  }
+  if (action === 'skip') skipNotif(btn.dataset.skipKey);
+  else if (action === 'pay') { closeModal('modalNotifs'); setTimeout(() => openPayModal(shopId), 220); }
+  else if (action === 'bill') { closeModal('modalNotifs'); setTimeout(() => sendBillWhatsApp(shopId), 220); }
+  else if (action === 'view') { closeModal('modalNotifs'); setTimeout(() => openShop(shopId), 220); }
 });
 
-/* ================= VIEW ALL TRANSACTIONS ================= */
 function renderAllTxModal(){
   const list = $('allTxList');
   const txs = state.txs.slice(0, 200);
   if (!txs.length) {
-    list.innerHTML = `<div class="empty" style="padding:40px 16px"><div class="ico">📋</div><p>No transactions yet.</p></div>`;
+    list.innerHTML = `<div class="empty" style="padding:40px 16px"><div class="ico">▤</div><p>No transactions yet.</p></div>`;
     return;
   }
   list.innerHTML = `<div style="text-align:right;font-size:11px;color:var(--muted);margin-bottom:8px;font-weight:600">Showing ${txs.length} of ${state.txs.length}</div>` +
     txs.map(t => txCardHTML(t, true)).join('');
 }
-$('moreTxBtn').addEventListener('click', () => {
-  renderAllTxModal();
-  openModal('modalAllTx');
-});
+$('moreTxBtn').addEventListener('click', () => { renderAllTxModal(); openModal('modalAllTx'); });
 $('allTxList').addEventListener('click', e => {
   const txEl = e.target.closest('[data-tx-id]');
   if (txEl) { closeModal('modalAllTx'); setTimeout(() => openTxModal(txEl.dataset.txId), 200); }
 });
 
-/* ================= CLEAR ALL DATA ================= */
 function updateDangerCounts(){
   const el = $('dangerCounts');
   if (!el) return;
-  el.innerHTML = `
-    • All shops (<b>${state.shops.length}</b>)<br>
-    • All transactions (<b>${state.txs.length}</b>)<br>
-    • Your profile & logo
-  `;
+  el.innerHTML = `• All shops (<b>${state.shops.length}</b>)<br>• All transactions (<b>${state.txs.length}</b>)<br>• Your profile & logo`;
 }
 $('clearAllBtn').addEventListener('click', () => {
   updateDangerCounts();
@@ -2836,134 +2987,81 @@ $('clearAllBtn').addEventListener('click', () => {
   openModal('modalClear');
   setTimeout(() => $('clearPassword').focus(), 140);
 });
-
 $('confirmClearBtn').addEventListener('click', async () => {
   const pass = $('clearPassword').value;
   const msg = $('clearMsg');
   const btn = $('confirmClearBtn');
   msg.className = 'msg'; msg.textContent = '';
-
-  if (!pass) {
-    msg.className = 'msg err'; msg.textContent = 'Please enter your password.';
-    return;
-  }
-
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span>Verifying...';
-
+  if (!pass) { msg.className = 'msg err'; msg.textContent = 'Please enter your password.'; return; }
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Verifying...';
   try {
     const cred = EmailAuthProvider.credential(state.user.email, pass);
     await reauthenticateWithCredential(state.user, cred);
-
     msg.textContent = 'Deleting data...';
-
-    for (const t of state.txs) {
-      try { await deleteDoc(doc(db, 'users', state.user.uid, 'transactions', t.id)); }
-      catch(err) { console.warn('Failed tx', t.id, err); }
-    }
-    for (const s of state.shops) {
-      try { await deleteDoc(doc(db, 'users', state.user.uid, 'shops', s.id)); }
-      catch(err) { console.warn('Failed shop', s.id, err); }
-    }
-    try { await deleteDoc(doc(db, 'users', state.user.uid, 'profile', 'main')); }
-    catch(err) { console.warn('Failed profile', err); }
+    for (const t of state.txs) { try { await deleteDoc(doc(db, 'users', state.user.uid, 'transactions', t.id)); } catch(err) {} }
+    for (const s of state.shops) { try { await deleteDoc(doc(db, 'users', state.user.uid, 'shops', s.id)); } catch(err) {} }
+    try { await deleteDoc(doc(db, 'users', state.user.uid, 'profile', 'main')); } catch(err) {}
     try { localStorage.removeItem(getSkippedKey()); localStorage.removeItem(getSeenKey()); } catch(e) {}
-
     closeModal('modalClear');
-    toast('🗑️ All data cleared successfully');
+    toast('All data cleared');
     state.profile = null;
     await loadProfile(state.user.uid);
   } catch (err) {
     console.error(err);
     msg.className = 'msg err';
     const code = err.code || '';
-    if (code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
-      msg.textContent = 'Wrong password. Please try again.';
-    } else if (code === 'auth/too-many-requests') {
-      msg.textContent = 'Too many attempts. Please wait and try again.';
-    } else if (code === 'auth/requires-recent-login') {
-      msg.textContent = 'Please login again and retry.';
-    } else if (code === 'auth/network-request-failed') {
-      msg.textContent = 'Network error. Check your connection.';
-    } else {
-      msg.textContent = 'Failed: ' + (code || err.message || 'Unknown error');
-    }
+    if (code === 'auth/wrong-password' || code === 'auth/invalid-credential') msg.textContent = 'Wrong password.';
+    else if (code === 'auth/too-many-requests') msg.textContent = 'Too many attempts. Please wait.';
+    else if (code === 'auth/requires-recent-login') msg.textContent = 'Please login again and retry.';
+    else msg.textContent = 'Failed: ' + (code || err.message || 'Unknown error');
   } finally {
-    btn.disabled = false;
-    btn.textContent = '🗑️ Delete Everything';
+    btn.disabled = false; btn.textContent = 'Delete Everything';
   }
 });
 
-/* ================= EXPORT ================= */
 $('exportBtn').addEventListener('click', () => {
-  const data = {
-    profile: state.profile,
-    shops: state.shops,
-    transactions: state.txs,
-    exportedAt: new Date().toISOString()
-  };
+  const data = { profile: state.profile, shops: state.shops, transactions: state.txs, exportedAt: new Date().toISOString() };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url;
-  a.download = 'shop-ledger-export-' + todayStr() + '.json';
-  a.click();
-  URL.revokeObjectURL(url);
-  toast('📤 Exported');
+  a.href = url; a.download = 'shop-ledger-export-' + todayStr() + '.json';
+  a.click(); URL.revokeObjectURL(url);
+  toast('Exported');
 });
 
-/* ================= TRANSACTION EDIT / DELETE ================= */
 function openTxModal(txId){
   const t = state.txs.find(x => x.id === txId);
   if (!t) { toast('Transaction not found'); return; }
   const isJob = t.type === 'job';
-
   $('txForm').reset();
   $('txId').value = t.id;
   $('txType').value = t.type;
   $('txModalTitle').textContent = isJob ? 'Edit Job' : 'Edit Payment';
-
-  const opts = state.shops.map(s =>
-    `<option value="${s.id}">${esc(s.name)}${s.phone?' — '+esc(s.phone):''}</option>`
-  ).join('');
+  const opts = state.shops.map(s => `<option value="${s.id}">${esc(s.name)}${s.phone?' — '+esc(s.phone):''}</option>`).join('');
   $('txShop').innerHTML = '<option value="">-- Select a shop --</option>' + opts;
   $('txShop').value = t.shopId || '';
-
   $('txDescField').classList.toggle('hidden', !isJob);
   $('txMethodField').classList.toggle('hidden', isJob);
-
-  if (isJob) {
-    $('txDesc').value = t.description || '';
-    $('txDesc').required = true;
-  } else {
-    $('txDesc').required = false;
-    $('txMethod').value = t.method || 'Cash';
-  }
-
+  if (isJob) { $('txDesc').value = t.description || ''; $('txDesc').required = true; }
+  else { $('txDesc').required = false; $('txMethod').value = t.method || 'Cash'; }
   $('txAmount').value = (t.amount ?? '');
   $('txDate').value = t.date || todayStr();
   $('txTime').value = t.time || nowTime();
   $('txNotes').value = t.notes || '';
-
   openModal('modalTx');
   setTimeout(() => (isJob ? $('txDesc') : $('txAmount')).focus(), 120);
 }
-
 $('txForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  if (!state.user) return;
+  e.preventDefault(); if (!state.user) return;
   const id = $('txId').value;
   const type = $('txType').value;
   const shopId = $('txShop').value;
   if (!shopId) { toast('Select a shop'); return; }
-
   const btn = $('saveTxBtn');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span>Saving...';
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Saving...';
   try {
     const data = {
-      shopId,
-      type,
+      shopId, type,
       amount: Number($('txAmount').value) || 0,
       date: $('txDate').value || todayStr(),
       time: $('txTime').value || nowTime(),
@@ -2972,38 +3070,23 @@ $('txForm').addEventListener('submit', async (e) => {
     };
     if (type === 'job') data.description = $('txDesc').value.trim();
     else data.method = $('txMethod').value;
-
     await updateDoc(doc(db, 'users', state.user.uid, 'transactions', id), data);
-    toast('✓ Transaction updated');
+    toast('Transaction updated');
     closeModal('modalTx');
-  } catch(err) {
-    console.error(err);
-    toast('Error updating transaction');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Save';
-  }
+  } catch(err) { console.error(err); toast('Error updating'); }
+  finally { btn.disabled = false; btn.textContent = 'Save'; }
 });
-
 $('deleteTxBtn').addEventListener('click', async () => {
-  const id = $('txId').value;
-  if (!id) return;
+  const id = $('txId').value; if (!id) return;
   if (!confirm('Delete this transaction? This cannot be undone.')) return;
-
   const btn = $('deleteTxBtn');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span>';
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
   try {
     await deleteDoc(doc(db, 'users', state.user.uid, 'transactions', id));
-    toast('🗑️ Transaction deleted');
+    toast('Transaction deleted');
     closeModal('modalTx');
-  } catch(err) {
-    console.error(err);
-    toast('Error deleting transaction');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = '🗑️ Delete';
-  }
+  } catch(err) { console.error(err); toast('Error deleting'); }
+  finally { btn.disabled = false; btn.textContent = 'Delete'; }
 });
 
 $('detailTx').addEventListener('click', e => {
@@ -3011,7 +3094,9 @@ $('detailTx').addEventListener('click', e => {
   if (el && el.dataset.txId) openTxModal(el.dataset.txId);
 });
 
-console.log('✅ Shop Ledger loaded (v3 — Due Days after job)');
+$('themeBtn').addEventListener('click', toggleTheme);
+
+console.log('Shop Ledger v6.2 — PDF render fix applied');
 </script>
 </body>
 </html>
