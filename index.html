@@ -375,6 +375,16 @@
   .invoice-total .tv{font-size:20px;font-weight:800;color:#1a1f29;font-variant-numeric:tabular-nums}
   .invoice-total.tv-clear .tv{color:#15803d}
 
+  .invoice-bottom{display:flex;flex-wrap:wrap;gap:14px;align-items:stretch;margin-top:16px;break-inside:avoid}
+  .invoice-bank{flex:1 1 240px;border:1px solid #d1d5db;border-left:3px solid #1a1f29;background:#f9fafb;padding:10px 12px;border-radius:4px}
+  .invoice-bank .bk-title{font-size:9.5px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}
+  .invoice-bank .bk-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px}
+  .invoice-bank .bk-grid .k{display:block;font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.4px}
+  .invoice-bank .bk-grid .v{display:block;font-size:11.5px;font-weight:600;color:#1a1f29}
+  .invoice-bank .bk-grid .accno{grid-column:1 / -1}
+  .invoice-bank .bk-grid .accno .v{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:15px;font-weight:800;letter-spacing:.6px}
+  .invoice-bottom .invoice-total{margin-top:0;flex:0 0 36%;flex-direction:column;align-items:flex-end;justify-content:center;text-align:right;gap:4px}
+  @media (max-width:480px){.invoice-bottom .invoice-total{flex:1 1 100%;align-items:flex-start;text-align:left}}
   .invoice-footer{margin-top:24px;padding-top:14px;border-top:1px solid #e5e7eb;text-align:center;font-size:10.5px;color:#6b7280;line-height:1.6}
   .invoice-footer strong{color:#1a1f29;font-weight:600}
 
@@ -740,6 +750,7 @@
         <div class="profile-detail"><span class="pico">📞</span><div style="flex:1"><div class="plbl">Phone</div><div class="pval" id="pInfoPhone">—</div></div></div>
         <div class="profile-detail"><span class="pico">📍</span><div style="flex:1"><div class="plbl">Address</div><div class="pval" id="pInfoAddress">—</div></div></div>
         <div class="profile-detail"><span class="pico">✉️</span><div style="flex:1"><div class="plbl">Email</div><div class="pval" id="pInfoEmail">—</div></div></div>
+        <div class="profile-detail"><span class="pico">🏦</span><div style="flex:1"><div class="plbl">Bank Account</div><div class="pval" id="pInfoBank">—</div></div></div>
         <div class="profile-detail"><span class="pico">#</span><div style="flex:1"><div class="plbl">Account ID</div><div class="pval" id="pInfoUid" style="font-family:ui-monospace,monospace;font-size:10.5px;color:var(--muted)">—</div></div></div>
       </section>
 
@@ -1011,6 +1022,15 @@
       <div class="field"><label>Phone</label><input id="pfPhone" type="tel" placeholder="0771234567" /></div>
       <div class="field"><label>Business Address</label><textarea id="pfAddress" rows="2" placeholder="No. 123, Main Street, Colombo"></textarea></div>
       <div class="field"><label>Business Email</label><input id="pfEmail" type="email" placeholder="business@email.com" /></div>
+
+      <div style="margin:18px 0 10px;padding-top:14px;border-top:1px solid var(--glass-border);font-weight:700;font-size:13px">🏦 Bank Details <span style="font-weight:400;color:var(--muted);font-size:11.5px">(printed on bills so clients can pay)</span></div>
+      <div class="field"><label>Bank Name</label><input id="pfBankName" placeholder="Commercial Bank" /></div>
+      <div class="field"><label>Branch</label><input id="pfBankBranch" placeholder="Colombo" /></div>
+      <div class="field"><label>Account Holder Name</label><input id="pfBankAccName" placeholder="S. Perera" /></div>
+      <div class="field"><label>Account Number</label><input id="pfBankAccNo" inputmode="numeric" placeholder="1234567890" /></div>
+      <label style="display:flex;align-items:center;gap:10px;font-size:13px;margin-bottom:14px;cursor:pointer">
+        <input type="checkbox" id="pfShowBank" checked style="width:18px;height:18px" /> Show bank details on bills (when an amount is due)
+      </label>
       <div class="modal-actions">
         <div class="spacer"></div>
         <button type="button" class="btn-ghost" data-close="modalProfile">Cancel</button>
@@ -1401,6 +1421,9 @@ function renderProfile(){
   $('pInfoAddress').textContent = p.address || '—';
   $('pInfoEmail').textContent = p.businessEmail || state.user?.email || '—';
   $('pInfoUid').textContent = state.user?.uid || '—';
+  $('pInfoBank').textContent = p.bankAccNo
+    ? [p.bankName, p.bankAccNo].filter(Boolean).join(' - ') + (p.bankAccName ? ' (' + p.bankAccName + ')' : '')
+    : '—';
   if (state.billShopId) updateBillPreview();
   updateAccountBadge(state.approvalStatus || 'approved');
 }
@@ -1441,6 +1464,11 @@ $('editProfileBtn').addEventListener('click', () => {
   $('pfPhone').value = p.phone || '';
   $('pfAddress').value = p.address || '';
   $('pfEmail').value = p.businessEmail || '';
+  $('pfBankName').value = p.bankName || '';
+  $('pfBankBranch').value = p.bankBranch || '';
+  $('pfBankAccName').value = p.bankAccName || '';
+  $('pfBankAccNo').value = p.bankAccNo || '';
+  $('pfShowBank').checked = p.showBank !== false;
   $('pfIcon').value = p.icon || '📱';
   renderUploadPreview();
   openModal('modalProfile');
@@ -1476,6 +1504,11 @@ $('profileForm').addEventListener('submit', async (e) => {
       phone: $('pfPhone').value.trim(),
       address: $('pfAddress').value.trim(),
       businessEmail: $('pfEmail').value.trim(),
+      bankName: $('pfBankName').value.trim(),
+      bankBranch: $('pfBankBranch').value.trim(),
+      bankAccName: $('pfBankAccName').value.trim(),
+      bankAccNo: $('pfBankAccNo').value.trim(),
+      showBank: $('pfShowBank').checked,
       icon: $('pfIcon').value.trim() || '📱',
       iconUrl: state.pendingLogoData || null,
       updatedAt: Date.now()
@@ -1754,6 +1787,7 @@ function buildSummaryBillText(d){
   L.push('  Rs ' + fmt(currentOutstanding));
   L.push(line);
   L.push('');
+  bankLines(p, currentOutstanding).forEach(x => L.push(x));
   L.push('Thank you for your business.');
   if (p.businessName || p.phone) L.push((p.businessName || '') + (p.phone ? ' | ' + p.phone : ''));
   return L.join('\n');
@@ -1808,6 +1842,7 @@ function buildDetailedBillText(d){
   L.push('BALANCE:  Rs ' + fmt(balance));
   L.push(line);
   L.push('');
+  bankLines(p, balance).forEach(x => L.push(x));
   L.push('Thank you for your business.');
   return L.join('\n');
 }
@@ -1821,6 +1856,32 @@ function buildBillText(){
   }
   const d = getDetailedBillData(shopId, state.billFrom, state.billTo);
   return d ? buildDetailedBillText(d) : '';
+}
+
+/* ---- Bank details on bills ---- */
+function bankVisible(p, due){
+  return !!(p && p.bankAccNo && p.showBank !== false && due > 0.01);
+}
+function bankBlockHTML(p, due){
+  if (!bankVisible(p, due)) return '';
+  const cell = (k, v, cls) => v ? '<div' + (cls ? ' class="' + cls + '"' : '') + '><span class="k">' + k + '</span><span class="v">' + esc(v) + '</span></div>' : '';
+  let h = '<div class="invoice-bank">';
+  h += '<div class="bk-title">Payment Details</div>';
+  h += '<div class="bk-grid">';
+  h += cell('Bank', p.bankName) + cell('Branch', p.bankBranch) + cell('Account Name', p.bankAccName);
+  h += cell('Account No', p.bankAccNo, 'accno');
+  h += '</div></div>';
+  return h;
+}
+function bankLines(p, due){
+  if (!bankVisible(p, due)) return [];
+  const L = ['PAYMENT DETAILS'];
+  if (p.bankName) L.push('Bank: ' + p.bankName);
+  if (p.bankBranch) L.push('Branch: ' + p.bankBranch);
+  if (p.bankAccName) L.push('Account Name: ' + p.bankAccName);
+  L.push('Account No: ' + p.bankAccNo);
+  L.push('');
+  return L;
 }
 
 function buildSummaryBillHTML(d){
@@ -1891,10 +1952,13 @@ function buildSummaryBillHTML(d){
     html += '</div></div></div>';
   }
 
+  const bankHtml = bankBlockHTML(p, currentOutstanding);
+  if (bankHtml) html += '<div class="invoice-bottom">' + bankHtml;
   html += '<div class="invoice-total' + (currentOutstanding <= 0.01 ? ' tv-clear' : '') + '">';
   html += '<div class="tl">Current Outstanding</div>';
   html += '<div class="tv">Rs ' + fmt(currentOutstanding) + '</div>';
   html += '</div>';
+  if (bankHtml) html += '</div>';
 
   html += '<div class="invoice-footer">';
   html += 'Thank you for your business.<br>';
@@ -1963,10 +2027,13 @@ function buildDetailedBillHTML(d){
   html += '<div style="display:flex;justify-content:space-between;padding:3px 0"><span>Total Payments</span><strong style="color:#15803d">Rs ' + fmt(totalPay) + '</strong></div>';
   html += '</div>';
 
+  const bankHtml = bankBlockHTML(p, balance);
+  if (bankHtml) html += '<div class="invoice-bottom">' + bankHtml;
   html += '<div class="invoice-total' + (balance <= 0.01 ? ' tv-clear' : '') + '">';
   html += '<div class="tl">Balance</div>';
   html += '<div class="tv">Rs ' + fmt(balance) + '</div>';
   html += '</div>';
+  if (bankHtml) html += '</div>';
 
   html += '<div class="invoice-footer">';
   html += 'Thank you for your business.<br>';
@@ -2034,17 +2101,39 @@ async function prepareBillForPDF(){
     'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif'
   ].join(';');
 
+  // COMPACT layout for PDF: tighter spacing/fonts so the bill uses as little page space as possible
   const styleOverride = `
     <style>
       #pdfContent .invoice-wrapper{border-radius:0 !important;box-shadow:none !important;background:#ffffff !important;opacity:1 !important;visibility:visible !important}
-      #pdfContent .invoice-doc{padding:8px 40px 20px !important;font-size:12.5px !important;line-height:1.5 !important}
-      #pdfContent .invoice-title{font-size:22px !important}
-      #pdfContent .invoice-parties{grid-template-columns:1fr 1fr !important;gap:20px !important;display:grid !important}
-      #pdfContent .invoice-table{width:100% !important;border-collapse:collapse !important}
-      #pdfContent .invoice-table thead th{padding:7px 6px !important}
-      #pdfContent .invoice-table tbody td{padding:9px 6px !important}
-      #pdfContent .party-block .party-label{font-size:9.5px !important}
-      #pdfContent .party-name{font-size:13px !important}
+      #pdfContent .invoice-doc{padding:0 30px 6px !important;font-size:11px !important;line-height:1.4 !important}
+      #pdfContent .invoice-header{padding-bottom:8px !important;margin-bottom:10px !important;gap:10px !important}
+      #pdfContent .invoice-title{font-size:17px !important}
+      #pdfContent .invoice-subtitle{font-size:9.5px !important;margin-top:1px !important}
+      #pdfContent .invoice-meta{font-size:10.5px !important;line-height:1.5 !important}
+      #pdfContent .invoice-parties{grid-template-columns:1fr 1fr !important;gap:14px !important;margin-bottom:10px !important;display:grid !important}
+      #pdfContent .party-block .party-label{font-size:9px !important;margin-bottom:3px !important;padding-bottom:2px !important}
+      #pdfContent .party-name{font-size:12px !important;margin-bottom:2px !important}
+      #pdfContent .party-line{font-size:10.5px !important;line-height:1.4 !important}
+      #pdfContent .invoice-block{margin-bottom:10px !important}
+      #pdfContent .invoice-block-title{font-size:9px !important;margin-bottom:4px !important;padding-bottom:3px !important}
+      #pdfContent .invoice-prevbal{padding:6px 10px !important;margin-bottom:8px !important}
+      #pdfContent .invoice-payment-block{padding:6px 10px !important}
+      #pdfContent .invoice-table{width:100% !important;border-collapse:collapse !important;font-size:10.5px !important}
+      #pdfContent .invoice-table thead th{padding:4px 5px !important;font-size:9px !important}
+      #pdfContent .invoice-table tbody td{padding:4px 5px !important;font-size:10.5px !important}
+      #pdfContent .invoice-table tbody td.desc{font-size:10px !important}
+      #pdfContent .invoice-table .ref{font-size:9.5px !important}
+      #pdfContent .invoice-table .notes{font-size:9.5px !important;margin-top:1px !important}
+      #pdfContent .invoice-total{margin-top:10px !important;padding-top:8px !important}
+      #pdfContent .invoice-total .tv{font-size:16px !important}
+      #pdfContent .invoice-bottom{margin-top:10px !important;gap:12px !important;flex-wrap:nowrap !important}
+      #pdfContent .invoice-bottom .invoice-total{margin-top:0 !important;flex:0 0 36% !important;flex-direction:column !important;align-items:flex-end !important;text-align:right !important}
+      #pdfContent .invoice-bank{flex:1 1 auto !important;padding:7px 10px !important}
+      #pdfContent .invoice-bank .bk-title{margin-bottom:4px !important}
+      #pdfContent .invoice-bank .bk-grid{gap:4px 12px !important}
+      #pdfContent .invoice-bank .bk-grid .v{font-size:11px !important}
+      #pdfContent .invoice-bank .bk-grid .accno .v{font-size:13.5px !important}
+      #pdfContent .invoice-footer{margin-top:12px !important;padding-top:8px !important;font-size:9.5px !important;line-height:1.5 !important}
     </style>
   `;
 
@@ -2068,12 +2157,12 @@ async function prepareBillForPDF(){
   // Full rendered size of the bill (so nothing is cut off at the viewport edge)
   const fullW = 794;
   const fullH = Math.ceil(container.scrollHeight) + 40;
-  const scale = fullH > 5000 ? 1.5 : 2;   // keep canvas within mobile memory limits
+  const scale = fullH > 5000 ? 1.4 : 1.8; // smaller file + keeps canvas within mobile memory limits
 
   const opt = {
-    margin: [12, 0, 14, 0],               // top, left, bottom, right (mm) -> clean A4 margins on every page
+    margin: [8, 0, 10, 0],                // top, left, bottom, right (mm) -> compact A4 margins
     filename,
-    image: { type: 'jpeg', quality: 0.98 },
+    image: { type: 'jpeg', quality: 0.9 },
     html2canvas: {
       scale,
       useCORS: true,
@@ -2091,7 +2180,7 @@ async function prepareBillForPDF(){
     pagebreak: {
       mode: ['css', 'legacy'],
       avoid: ['.invoice-table tr', '.invoice-block-title', '.party-block', '.invoice-prevbal',
-              '.invoice-payment-block', '.invoice-total', '.invoice-footer']
+              '.invoice-payment-block', '.invoice-total', '.invoice-bottom', '.invoice-bank', '.invoice-footer']
     }
   };
 
